@@ -234,6 +234,12 @@ select.input {
   border-radius: 16px;
   padding: 1.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+  border-color: var(--border-default);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .card-glass {
@@ -593,8 +599,8 @@ a:focus-visible {
   }
 }
 
-/* Smooth Transitions */
-* {
+/* Smooth Transitions - Applied selectively */
+a, button, .btn, .card, .badge, .input, select {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
@@ -613,11 +619,11 @@ img {
 }
 
 /* Improved Link Styles */
-a {
+a:not(.btn):not(.badge) {
   transition: color 0.2s ease;
 }
 
-a:hover {
+a:not(.btn):not(.badge):hover {
   color: var(--gold);
 }
 
