@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       status: purchase.status,
       paymentProvider: purchase.paymentProvider || 'credits',
       createdAt: purchase.createdAt.toISOString(),
-      completedAt: purchase.status === 'completed' ? purchase.updatedAt.toISOString() : undefined,
+      completedAt: purchase.status === 'completed' ? purchase.createdAt.toISOString() : undefined,
     }))
 
     return NextResponse.json({ payments })
