@@ -6,12 +6,13 @@ import PromptCard from '@/components/PromptCard'
 export const dynamic = 'force-dynamic'
 
 async function getPrompts(sort: 'trending' | 'new' | 'free', limit: number = 6) {
-  const where: Record<string, unknown> = { isPublished: true }
-  if (sort === 'free') {
-    where.priceJPY = 0
-  }
+  try {
+    const where: Record<string, unknown> = { isPublished: true }
+    if (sort === 'free') {
+      where.priceJPY = 0
+    }
 
-  const prompts = await prisma.prompt.findMany({
+    const prompts = await prisma.prompt.findMany({
     where,
     include: {
       owner: {
@@ -58,6 +59,10 @@ async function getPrompts(sort: 'trending' | 'new' | 'free', limit: number = 6) 
       trendingScore: Math.round(trendingScore * 100) / 100,
     }
   }).sort((a, b) => sort === 'trending' ? b.trendingScore - a.trendingScore : 0)
+  } catch (error) {
+    console.error(`Error fetching ${sort} prompts:`, error)
+    return []
+  }
 }
 
 export default async function Home() {

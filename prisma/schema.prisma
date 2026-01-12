@@ -5,10 +5,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// PostgreSQL対応: 環境変数でプロバイダーを切り替え可能
-// 開発環境: sqlite, 本番環境: postgresql
+// PostgreSQL対応: Vercel本番環境ではPostgreSQLを使用
+// 開発環境でもPostgreSQLを使用する場合は、DATABASE_URLにPostgreSQLの接続URLを設定
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
