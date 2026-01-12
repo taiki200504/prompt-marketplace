@@ -11,11 +11,15 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [credits, setCredits] = useState<number | null>(null)
   const [scrolled, setScrolled] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const handleScroll = () => {
       setScrolled(window.scrollY > 10)
     }
+    // Initial check
+    handleScroll()
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -39,8 +43,9 @@ export default function Header() {
   return (
     <header 
       role="banner"
+      suppressHydrationWarning
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled 
+        mounted && scrolled 
           ? 'bg-[var(--bg-primary)]/95 backdrop-blur-xl border-b border-[var(--border-subtle)] shadow-lg shadow-black/10' 
           : 'bg-transparent'
       }`}
@@ -48,7 +53,7 @@ export default function Header() {
       <div className="container">
         <div className="flex items-center justify-between h-20 py-5">
           {/* Logo */}
-          <div className="flex items-center gap-12">
+          <div className="flex items-center gap-12 flex-1">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)] flex items-center justify-center shadow-lg shadow-[var(--gold)]/30 transition-transform group-hover:scale-105">
                 <span className="text-[var(--bg-primary)] font-bold text-base">P</span>
@@ -88,7 +93,7 @@ export default function Header() {
 
           {/* Right side */}
           <div className="flex items-center gap-3">
-            {status === 'loading' ? (
+            {!mounted || status === 'loading' ? (
               <div className="h-9 w-28 skeleton rounded-lg" />
             ) : status === 'authenticated' ? (
               <>
@@ -188,47 +193,81 @@ export default function Header() {
                 </div>
               </>
             ) : (
-              <div className="hidden md:flex items-center gap-3">
-                <Link href="/login" className="btn btn-ghost">
-                  ログイン
-                </Link>
-                <Link href="/signup" className="btn btn-primary">
-                  無料で始める
-                </Link>
-              </div>
+              <>
+                <div className="hidden md:flex items-center gap-3">
+                  <Link href="/login" className="btn btn-ghost">
+                    ログイン
+                  </Link>
+                  <Link href="/signup" className="btn btn-primary">
+                    無料で始める
+                  </Link>
+                </div>
+                {/* Mobile Menu Button for unauthenticated */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+                  aria-label="メニュー"
+                  aria-expanded={mobileMenuOpen}
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    {mobileMenuOpen ? (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    ) : (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6h16M4 12h16M4 18h16"
+                      />
+                    )}
+                  </svg>
+                </button>
+              </>
+            )}
+            
+            {/* Mobile Menu Button for authenticated */}
+            {status === 'authenticated' && (
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors ml-2"
+                aria-label="メニュー"
+                aria-expanded={mobileMenuOpen}
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  {mobileMenuOpen ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  )}
+                </svg>
+              </button>
             )}
           </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
-            aria-label="メニュー"
-            aria-expanded={mobileMenuOpen}
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              {mobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
         </div>
 
         {/* Mobile Menu */}
