@@ -64,7 +64,7 @@ export default function PromptCard({
   return (
     <Link href={`/prompts/${id}`} className="block group h-full">
       <div 
-        className={`relative bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[var(--border-accent)] hover:shadow-[0_0_40px_rgba(212,175,55,0.08)] hover:scale-[1.02] h-full flex flex-col`}
+        className={`relative bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[var(--border-accent)] hover:shadow-[0_0_40px_rgba(212,175,55,0.12)] hover:scale-[1.02] hover:-translate-y-1 h-full flex flex-col shadow-sm hover:shadow-xl`}
       >
         {/* Thumbnail */}
         {thumbnailUrl ? (
@@ -110,11 +110,11 @@ export default function PromptCard({
           </>
         )}
 
-        <div className={`${compact ? 'p-4' : 'p-5'} flex-1 flex flex-col`}>
+        <div className={`${compact ? 'p-4' : 'p-6'} flex-1 flex flex-col`}>
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-3">
+        <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-[var(--text-primary)] line-clamp-2 group-hover:text-[var(--gold)] transition-colors duration-200 text-base sm:text-lg leading-tight">
+            <h3 className="font-semibold text-[var(--text-primary)] line-clamp-2 group-hover:text-[var(--gold)] transition-colors duration-200 text-lg sm:text-xl leading-tight mb-1">
               {title}
             </h3>
           </div>
@@ -137,13 +137,13 @@ export default function PromptCard({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-4 leading-relaxed flex-1">
+        <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-5 leading-relaxed flex-1">
           {shortDescription}
         </p>
 
         {/* Tags */}
-        <div className="flex items-center gap-2 mb-4">
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-xs font-medium border border-[var(--border-subtle)]">
+        <div className="flex items-center gap-2 mb-5">
+          <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-xs font-medium border border-[var(--border-subtle)] hover:border-[var(--border-accent)] transition-colors">
             {category}
           </span>
           {isTrending && !thumbnailUrl && (

@@ -304,22 +304,22 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
   const hasReviewed = prompt.reviews.some(r => r.user.username === session?.user?.username)
 
   return (
-    <div className="container py-12">
-      <div className="max-w-4xl mx-auto">
+    <div className="container py-12 sm:py-16">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="mb-10 sm:mb-12">
+          <div className="flex items-start justify-between gap-6 mb-6">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="badge badge-neutral">{prompt.category}</span>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="badge badge-neutral text-sm px-3 py-1.5">{prompt.category}</span>
                 {prompt.priceJPY === 0 ? (
-                  <span className="badge badge-success">Free</span>
+                  <span className="badge badge-success text-sm px-3 py-1.5">Free</span>
                 ) : (
-                  <span className="badge badge-warning">◆{prompt.priceJPY.toLocaleString()}</span>
+                  <span className="badge badge-warning text-sm px-3 py-1.5">◆{prompt.priceJPY.toLocaleString()}</span>
                 )}
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">{prompt.title}</h1>
-              <p className="text-[var(--text-secondary)]">{prompt.shortDescription}</p>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight">{prompt.title}</h1>
+              <p className="text-lg text-[var(--text-secondary)] leading-relaxed">{prompt.shortDescription}</p>
             </div>
             
             <div className="flex items-center gap-2">
@@ -362,11 +362,11 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="lg:col-span-2 space-y-6 sm:space-y-8">
             {/* Prompt Body */}
             <div className="card">
-              <h2 className="text-lg font-medium mb-4">プロンプト</h2>
+              <h2 className="text-xl font-semibold mb-6">プロンプト</h2>
               <pre className="whitespace-pre-wrap bg-[var(--bg-primary)] p-4 rounded-lg text-sm font-mono overflow-x-auto border border-[var(--border-subtle)]">
                 {prompt.promptBody}
               </pre>
@@ -395,8 +395,8 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
             {/* Usage Guide */}
             {prompt.usageGuide && (
               <div className="card">
-                <h2 className="text-lg font-medium mb-4">使い方</h2>
-                <p className="text-[var(--text-secondary)] whitespace-pre-wrap text-sm">
+                <h2 className="text-xl font-semibold mb-6">使い方</h2>
+                <p className="text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
                   {prompt.usageGuide}
                 </p>
               </div>
@@ -404,7 +404,7 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
 
             {/* Example */}
             <div className="card">
-              <h2 className="text-lg font-medium mb-4">入出力例</h2>
+              <h2 className="text-xl font-semibold mb-6">入出力例</h2>
               <div className="space-y-4">
                 <div>
                   <h3 className="text-sm font-medium text-[var(--text-muted)] mb-2">入力</h3>
@@ -451,8 +451,8 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
 
             {/* Reviews */}
             <div className="card">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">レビュー ({prompt.reviewCount})</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold">レビュー ({prompt.reviewCount})</h2>
                 {canReview && !hasReviewed && (
                   <button
                     onClick={() => setShowReviewForm(!showReviewForm)}
@@ -521,11 +521,11 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-6 sm:space-y-8">
             {/* Purchase Card */}
             {!prompt.isOwner && (
-              <div className="card sticky top-20 lg:top-24">
-                <div className="text-center mb-6">
+              <div className="card sticky top-24 lg:top-28">
+                <div className="text-center mb-8">
                   {prompt.priceJPY === 0 ? (
                     <p className="text-2xl font-bold text-[var(--success)]">無料</p>
                   ) : (

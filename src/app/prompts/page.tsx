@@ -93,34 +93,34 @@ function PromptsContent() {
   }
 
   return (
-    <div className="container py-12">
+    <div className="container py-12 sm:py-16">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold mb-2">プロンプトを探す</h1>
-        <p className="text-sm text-[var(--text-muted)]">
+      <div className="mb-10 sm:mb-12">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-3 text-[var(--text-primary)]">プロンプトを探す</h1>
+        <p className="text-base text-[var(--text-secondary)]">
           {prompts.length}件のプロンプトが見つかりました
         </p>
       </div>
 
       {/* Filters */}
-      <div className="card mb-6 sm:mb-8">
-        <form onSubmit={handleSearch} className="space-y-4">
+      <div className="card mb-10 sm:mb-12 p-6 sm:p-8">
+        <form onSubmit={handleSearch} className="space-y-6">
           {/* Search */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-4">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="キーワードで検索..."
-              className="input flex-1"
+              className="input flex-1 text-base"
             />
-            <button type="submit" className="btn btn-primary w-full sm:w-auto">
+            <button type="submit" className="btn btn-primary w-full sm:w-auto px-8">
               検索
             </button>
           </div>
 
           {/* Filter row */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-5">
             {/* Category */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-[var(--text-muted)]">カテゴリ:</span>
@@ -212,17 +212,18 @@ function PromptsContent() {
 
       {/* Results */}
       {loading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="card">
-              <div className="h-6 skeleton mb-3" />
-              <div className="h-4 skeleton w-3/4 mb-2" />
-              <div className="h-4 skeleton w-1/2" />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="card animate-pulse">
+              <div className="h-6 skeleton mb-4" />
+              <div className="h-4 skeleton w-3/4 mb-3" />
+              <div className="h-4 skeleton w-1/2 mb-4" />
+              <div className="h-3 skeleton w-1/3" />
             </div>
           ))}
         </div>
       ) : prompts.length > 0 ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
           {prompts.map((prompt) => (
             <PromptCard key={prompt.id} {...prompt} />
           ))}

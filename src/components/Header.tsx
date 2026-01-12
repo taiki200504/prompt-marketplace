@@ -46,24 +46,24 @@ export default function Header() {
       }`}
     >
       <div className="container">
-        <div className="flex items-center justify-between h-18 py-4">
+        <div className="flex items-center justify-between h-20 py-5">
           {/* Logo */}
-          <div className="flex items-center gap-10">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)] flex items-center justify-center shadow-lg shadow-[var(--gold)]/20">
-                <span className="text-[var(--bg-primary)] font-bold text-sm">P</span>
+          <div className="flex items-center gap-12">
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)] flex items-center justify-center shadow-lg shadow-[var(--gold)]/30 transition-transform group-hover:scale-105">
+                <span className="text-[var(--bg-primary)] font-bold text-base">P</span>
               </div>
-              <span className="text-lg font-semibold tracking-tight hidden sm:block">
+              <span className="text-xl font-bold tracking-tight hidden sm:block">
                 <span className="text-gradient">Prompt</span>
                 <span className="text-[var(--text-primary)]">Market</span>
               </span>
             </Link>
 
             {/* Navigation - Desktop */}
-            <nav role="navigation" aria-label="メインナビゲーション" className="hidden md:flex items-center gap-1">
+            <nav role="navigation" aria-label="メインナビゲーション" className="hidden md:flex items-center gap-2">
               <Link
                 href="/prompts"
-                className="px-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-tertiary)] transition-all duration-200"
+                className="px-5 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--bg-tertiary)] transition-all duration-200"
               >
                 探索
               </Link>
@@ -71,13 +71,13 @@ export default function Header() {
                 <>
                   <Link
                     href="/create"
-                    className="px-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-tertiary)] transition-all duration-200"
+                    className="px-5 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--bg-tertiary)] transition-all duration-200"
                   >
                     投稿
                   </Link>
                   <Link
                     href="/favorites"
-                    className="px-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-tertiary)] transition-all duration-200"
+                    className="px-5 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--bg-tertiary)] transition-all duration-200"
                   >
                     お気に入り
                   </Link>

@@ -127,10 +127,10 @@ export default async function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="relative py-12 sm:py-16 border-y border-[var(--border-subtle)]">
+      <section className="relative py-16 sm:py-20 border-y border-[var(--border-subtle)]">
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-primary)]" />
         <div className="container relative">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 md:gap-16">
             <div className="stat-card">
               <p className="stat-value">{trending.length}+</p>
               <p className="stat-label">プロンプト</p>
@@ -152,9 +152,9 @@ export default async function Home() {
       </section>
 
       {/* Trending Section */}
-      <section className="py-20">
+      <section className="py-24">
         <div className="container">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between mb-12">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">🔥</span>
@@ -174,7 +174,7 @@ export default async function Home() {
           </div>
           
           {trending.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
               {trending.map((prompt) => (
                 <PromptCard key={prompt.id} {...prompt} />
               ))}
@@ -196,9 +196,9 @@ export default async function Home() {
       </section>
 
       {/* New Section */}
-      <section className="py-20 bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-primary)]">
+      <section className="py-24 bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-primary)]">
         <div className="container">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between mb-12">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">✨</span>
@@ -232,9 +232,9 @@ export default async function Home() {
       </section>
 
       {/* Free Section */}
-      <section className="py-20">
+      <section className="py-24">
         <div className="container">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between mb-12">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">🎁</span>
