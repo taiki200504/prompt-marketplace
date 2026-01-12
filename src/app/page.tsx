@@ -100,14 +100,14 @@ export default async function Home() {
               <span className="text-sm text-[var(--gold)] font-medium">プレミアムAIプロンプト</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8 leading-[1.1]">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-6 sm:mb-8 leading-[1.1] px-4 sm:px-0">
               <span className="text-[var(--text-primary)]">プロフェッショナルのための</span>
               <br />
               <span className="text-gradient">AIプロンプト</span>
               <span className="text-[var(--text-primary)]">マーケット</span>
             </h1>
             
-            <p className="text-lg sm:text-xl text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4 sm:px-0">
               厳選された高品質プロンプトを発見し、共有し、収益化。
               <br className="hidden sm:block" />
               成果を可視化して、ビジネスを加速させよう。
@@ -127,10 +127,10 @@ export default async function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="relative py-16 border-y border-[var(--border-subtle)]">
+      <section className="relative py-12 sm:py-16 border-y border-[var(--border-subtle)]">
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-primary)]" />
         <div className="container relative">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-12">
             <div className="stat-card">
               <p className="stat-value">{trending.length}+</p>
               <p className="stat-label">プロンプト</p>
@@ -174,7 +174,7 @@ export default async function Home() {
           </div>
           
           {trending.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {trending.map((prompt) => (
                 <PromptCard key={prompt.id} {...prompt} />
               ))}
@@ -218,7 +218,7 @@ export default async function Home() {
           </div>
           
           {recent.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {recent.map((prompt) => (
                 <PromptCard key={prompt.id} {...prompt} />
               ))}
@@ -254,7 +254,7 @@ export default async function Home() {
           </div>
           
           {free.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {free.map((prompt) => (
                 <PromptCard key={prompt.id} {...prompt} />
               ))}

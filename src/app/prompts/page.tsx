@@ -49,6 +49,9 @@ function PromptsContent() {
   const [category, setCategory] = useState(searchParams.get('category') || '')
   const [sort, setSort] = useState(searchParams.get('sort') || 'trending')
   const [freeOnly, setFreeOnly] = useState(searchParams.get('free') === 'true')
+  const [priceRange, setPriceRange] = useState(searchParams.get('price') || '')
+  const [minRating, setMinRating] = useState(searchParams.get('rating') || '')
+  const [tags, setTags] = useState(searchParams.get('tags') || '')
 
   useEffect(() => {
     const fetchPrompts = async () => {
@@ -58,6 +61,9 @@ function PromptsContent() {
       if (category) params.set('category', category)
       if (sort) params.set('sort', sort)
       if (freeOnly) params.set('free', 'true')
+      if (priceRange) params.set('price', priceRange)
+      if (minRating) params.set('rating', minRating)
+      if (tags) params.set('tags', tags)
 
       try {
         const res = await fetch(`/api/prompts?${params}`)
@@ -71,7 +77,7 @@ function PromptsContent() {
     }
 
     fetchPrompts()
-  }, [search, category, sort, freeOnly])
+  }, [search, category, sort, freeOnly, priceRange, minRating, tags])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,6 +86,9 @@ function PromptsContent() {
     if (category) params.set('category', category)
     if (sort) params.set('sort', sort)
     if (freeOnly) params.set('free', 'true')
+    if (priceRange) params.set('price', priceRange)
+    if (minRating) params.set('rating', minRating)
+    if (tags) params.set('tags', tags)
     router.push(`/prompts?${params}`)
   }
 
@@ -94,10 +103,10 @@ function PromptsContent() {
       </div>
 
       {/* Filters */}
-      <div className="card mb-8">
+      <div className="card mb-6 sm:mb-8">
         <form onSubmit={handleSearch} className="space-y-4">
           {/* Search */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={search}
@@ -105,13 +114,13 @@ function PromptsContent() {
               placeholder="キーワードで検索..."
               className="input flex-1"
             />
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary w-full sm:w-auto">
               検索
             </button>
           </div>
 
           {/* Filter row */}
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             {/* Category */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-[var(--text-muted)]">カテゴリ:</span>
@@ -154,13 +163,56 @@ function PromptsContent() {
               />
               <span className="text-sm text-[var(--text-secondary)]">無料のみ</span>
             </label>
+
+            {/* Price Range */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-[var(--text-muted)]">価格:</span>
+              <select
+                value={priceRange}
+                onChange={(e) => setPriceRange(e.target.value)}
+                className="input py-1.5 w-auto"
+              >
+                <option value="">すべて</option>
+                <option value="free">無料</option>
+                <option value="0-500">~500円</option>
+                <option value="500-1000">500-1000円</option>
+                <option value="1000-5000">1000-5000円</option>
+                <option value="5000+">5000円~</option>
+              </select>
+            </div>
+
+            {/* Min Rating */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-[var(--text-muted)]">評価:</span>
+              <select
+                value={minRating}
+                onChange={(e) => setMinRating(e.target.value)}
+                className="input py-1.5 w-auto"
+              >
+                <option value="">すべて</option>
+                <option value="4">4.0以上</option>
+                <option value="4.5">4.5以上</option>
+                <option value="5">5.0のみ</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Tags Search */}
+          <div>
+            <input
+              type="text"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="タグで検索（カンマ区切り）..."
+              className="input w-full"
+            />
           </div>
         </form>
       </div>
 
       {/* Results */}
       {loading ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="card">
               <div className="h-6 skeleton mb-3" />
@@ -170,7 +222,7 @@ function PromptsContent() {
           ))}
         </div>
       ) : prompts.length > 0 ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {prompts.map((prompt) => (
             <PromptCard key={prompt.id} {...prompt} />
           ))}

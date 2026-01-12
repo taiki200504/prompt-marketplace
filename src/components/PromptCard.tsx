@@ -62,9 +62,9 @@ export default function PromptCard({
   }
 
   return (
-    <Link href={`/prompts/${id}`} className="block group">
+    <Link href={`/prompts/${id}`} className="block group h-full">
       <div 
-        className={`relative bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[var(--border-accent)] hover:shadow-[0_0_40px_rgba(212,175,55,0.08)]`}
+        className={`relative bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[var(--border-accent)] hover:shadow-[0_0_40px_rgba(212,175,55,0.08)] hover:scale-[1.02] h-full flex flex-col`}
       >
         {/* Thumbnail */}
         {thumbnailUrl ? (
@@ -110,11 +110,11 @@ export default function PromptCard({
           </>
         )}
 
-        <div className={compact ? 'p-4' : 'p-5'}>
+        <div className={`${compact ? 'p-4' : 'p-5'} flex-1 flex flex-col`}>
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-3">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-[var(--text-primary)] line-clamp-1 group-hover:text-[var(--gold)] transition-colors duration-200">
+            <h3 className="font-semibold text-[var(--text-primary)] line-clamp-2 group-hover:text-[var(--gold)] transition-colors duration-200 text-base sm:text-lg leading-tight">
               {title}
             </h3>
           </div>
@@ -137,7 +137,7 @@ export default function PromptCard({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-[var(--text-muted)] line-clamp-2 mb-4 leading-relaxed">
+        <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-4 leading-relaxed flex-1">
           {shortDescription}
         </p>
 
@@ -155,8 +155,8 @@ export default function PromptCard({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-[var(--border-subtle)]">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between pt-4 border-t border-[var(--border-subtle)] mt-auto">
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
             <StarRating rating={avgRating} count={reviewCount} />
             <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
               <span className="opacity-60">📥</span>
@@ -166,7 +166,7 @@ export default function PromptCard({
           <span
             role="link"
             tabIndex={0}
-            className="text-xs text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors duration-200 cursor-pointer"
+            className="text-xs text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors duration-200 cursor-pointer whitespace-nowrap ml-2"
             onClick={handleProfileClick}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {

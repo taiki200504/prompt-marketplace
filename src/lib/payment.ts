@@ -211,7 +211,7 @@ export async function createStripeCheckoutSession(
         },
       ],
       mode: 'payment',
-      success_url: `${baseUrl}/prompts/${promptId}?purchased=true`,
+      success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/prompts/${promptId}`,
       metadata: {
         promptId,

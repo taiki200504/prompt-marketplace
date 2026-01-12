@@ -422,6 +422,19 @@ select.input {
 }
 
 /* Focus ring */
+/* アクセシビリティ: フォーカス表示の改善 */
+*:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
 .focus-ring:focus {
   outline: none;
   box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--gold);
@@ -533,3 +546,171 @@ select.input {
 .animate-delay-200 { animation-delay: 0.2s; }
 .animate-delay-300 { animation-delay: 0.3s; }
 .animate-delay-400 { animation-delay: 0.4s; }
+
+/* Skeleton Loading - Enhanced */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 0%,
+    var(--bg-elevated) 50%,
+    var(--bg-tertiary) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Improved Responsive Design */
+@media (max-width: 768px) {
+  .btn-lg {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9375rem;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+  }
+  
+  h2 {
+    font-size: 2rem;
+  }
+  
+  .card {
+    padding: 1.25rem;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+  }
+}
+
+/* Smooth Transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Improved Scroll Behavior */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+/* Better Image Loading */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Improved Link Styles */
+a {
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--gold);
+}
+
+/* Enhanced Card Hover Effects */
+.card-hover,
+.card-interactive {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-hover::before,
+.card-interactive::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--gold-muted) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-hover:hover::before,
+.card-interactive:hover::before {
+  opacity: 1;
+}
+
+.card-hover > *,
+.card-interactive > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Improved Button Active States */
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  box-shadow: 0 1px 4px rgba(212, 175, 55, 0.25);
+}
+
+/* Better Form Input States */
+.input:invalid {
+  border-color: var(--danger);
+}
+
+.input:valid {
+  border-color: var(--success);
+}
+
+/* Improved Badge Styles */
+.badge {
+  transition: all 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+}
+
+/* Enhanced Modal Backdrop */
+.modal-overlay {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(10, 10, 12, 0.7);
+}
+
+/* Improved Container Spacing */
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1400px;
+  }
+}
+
+/* Better Grid Layouts */
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    gap: 2rem;
+  }
+}
+
+/* Improved Text Selection */
+::selection {
+  background: var(--gold-muted);
+  color: var(--text-primary);
+}
+
+::-moz-selection {
+  background: var(--gold-muted);
+  color: var(--text-primary);
+}

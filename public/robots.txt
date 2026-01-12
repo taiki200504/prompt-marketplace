@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /edit/
+Disallow: /create
+Disallow: /credits
+Disallow: /favorites
+Disallow: /payments
+Disallow: /referral
+Disallow: /offline
+
+# Sitemap
+Sitemap: https://prompt-marketplace.vercel.app/sitemap.xml

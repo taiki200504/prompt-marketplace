@@ -294,10 +294,40 @@ SQLiteは開発用です。本番環境ではPostgreSQLを使用します。
    }
    ```
 
-7. **マイグレーション実行**
+7. **データベーススキーマの適用**
+
+   **方法A: prisma db push（推奨 - 開発環境）**
    ```bash
-   npx prisma migrate deploy
+   # Supabaseの接続文字列を環境変数として設定
+   export DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT].supabase.co:5432/postgres"
+   
+   # Prisma Clientを生成
+   npx prisma generate
+   
+   # スキーマをデータベースに適用
+   npx prisma db push
    ```
+
+   **方法B: スクリプトを使用（簡単）**
+   ```bash
+   # setup-supabase.shスクリプトを使用
+   ./setup-supabase.sh "postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT].supabase.co:5432/postgres"
+   ```
+
+   **方法C: .env.localファイルを作成**
+   ```bash
+   # .env.localファイルを作成
+   echo 'DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT].supabase.co:5432/postgres"' > .env.local
+   
+   # スキーマを適用
+   npx prisma generate
+   npx prisma db push
+   ```
+
+   ⚠️ **注意**: 
+   - `prisma migrate deploy`は使用しないでください（SQLite用のマイグレーションファイルが含まれているため）
+   - `prisma db push`はスキーマを直接データベースに適用します（開発環境向け）
+   - 本番環境では、Vercelのビルド時に自動的にスキーマが適用されます
 
 ---
 

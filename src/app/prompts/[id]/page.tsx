@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { useToast } from '@/components/Toast'
 import VersionHistory from '@/components/VersionHistory'
 import AIImproveButton from '@/components/AIImproveButton'
+import { PaymentButton } from '@/components/PaymentButton'
+import { generateStructuredData } from '@/lib/seo'
 
 interface Review {
   id: string
@@ -94,8 +96,6 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
   
   const [prompt, setPrompt] = useState<PromptDetail | null>(null)
   const [loading, setLoading] = useState(true)
-  const [purchasing, setPurchasing] = useState(false)
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
   const [isFavorited, setIsFavorited] = useState(false)
   
   // Review form
@@ -131,6 +131,30 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
         const promptData = await promptRes.json()
         setPrompt(promptData)
 
+        // 構造化データを追加
+        const structuredData = generateStructuredData({
+          type: 'Product',
+          title: promptData.title,
+          description: promptData.shortDescription,
+          url: `${window.location.origin}/prompts/${id}`,
+          image: promptData.thumbnailUrl || undefined,
+          price: promptData.priceJPY,
+          currency: 'JPY',
+        })
+        
+        // 既存の構造化データを削除
+        const existingScript = document.getElementById('structured-data')
+        if (existingScript) {
+          existingScript.remove()
+        }
+        
+        // 新しい構造化データを追加
+        const script = document.createElement('script')
+        script.id = 'structured-data'
+        script.type = 'application/ld+json'
+        script.textContent = JSON.stringify(structuredData)
+        document.head.appendChild(script)
+
         if (favoriteRes) {
           const favoriteData = await favoriteRes.json()
           setIsFavorited(favoriteData.isFavorited)
@@ -159,34 +183,6 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
       showToast(data.message, 'success')
     } catch {
       showToast('エラーが発生しました', 'error')
-    }
-  }
-
-  const handlePurchase = async () => {
-    if (!session) {
-      router.push('/login?callbackUrl=' + encodeURIComponent(`/prompts/${id}`))
-      return
-    }
-    
-    setPurchasing(true)
-    try {
-      const res = await fetch(`/api/prompts/${id}/purchase`, { method: 'POST' })
-      const data = await res.json()
-
-      if (res.ok) {
-        showToast('購入が完了しました！', 'success')
-        // Refresh prompt data
-        const promptRes = await fetch(`/api/prompts/${id}`)
-        const promptData = await promptRes.json()
-        setPrompt(promptData)
-        setShowPurchaseModal(false)
-      } else {
-        showToast(data.error || '購入に失敗しました', 'error')
-      }
-    } catch {
-      showToast('購入に失敗しました', 'error')
-    } finally {
-      setPurchasing(false)
     }
   }
 
@@ -260,9 +256,42 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
     return (
       <div className="container py-12">
         <div className="max-w-4xl mx-auto">
-          <div className="h-10 skeleton w-3/4 mb-4" />
-          <div className="h-6 skeleton w-1/2 mb-8" />
-          <div className="h-64 skeleton mb-8" />
+          <div className="space-y-6">
+            {/* Header Skeleton */}
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <div className="h-6 skeleton w-20 rounded-full" />
+                <div className="h-6 skeleton w-16 rounded-full" />
+              </div>
+              <div className="h-8 sm:h-10 skeleton w-3/4 rounded-lg" />
+              <div className="h-5 skeleton w-1/2 rounded-lg" />
+            </div>
+            
+            {/* Content Skeleton */}
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="card">
+                  <div className="h-6 skeleton w-32 mb-4 rounded-lg" />
+                  <div className="h-48 skeleton rounded-lg mb-4" />
+                  <div className="space-y-2">
+                    <div className="h-4 skeleton w-full rounded" />
+                    <div className="h-4 skeleton w-5/6 rounded" />
+                    <div className="h-4 skeleton w-4/6 rounded" />
+                  </div>
+                </div>
+              </div>
+              <div className="lg:col-span-1">
+                <div className="card">
+                  <div className="h-8 skeleton w-24 mb-4 rounded-lg" />
+                  <div className="h-12 skeleton w-full rounded-lg mb-4" />
+                  <div className="space-y-2">
+                    <div className="h-4 skeleton w-full rounded" />
+                    <div className="h-4 skeleton w-3/4 rounded" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -333,8 +362,8 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Prompt Body */}
             <div className="card">
               <h2 className="text-lg font-medium mb-4">プロンプト</h2>
@@ -492,10 +521,10 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-6">
             {/* Purchase Card */}
             {!prompt.isOwner && (
-              <div className="card sticky top-24">
+              <div className="card sticky top-20 lg:top-24">
                 <div className="text-center mb-6">
                   {prompt.priceJPY === 0 ? (
                     <p className="text-2xl font-bold text-[var(--success)]">無料</p>
@@ -523,12 +552,18 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
                     )}
                   </div>
                 ) : (
-                  <button
-                    onClick={() => setShowPurchaseModal(true)}
-                    className="btn btn-primary w-full"
-                  >
-                    購入する
-                  </button>
+                  <PaymentButton
+                    promptId={prompt.id}
+                    priceJPY={prompt.priceJPY}
+                    title={prompt.title}
+                    onSuccess={() => {
+                      // Refresh prompt data
+                      fetch(`/api/prompts/${id}`)
+                        .then((res) => res.json())
+                        .then((data) => setPrompt(data))
+                        .catch(console.error)
+                    }}
+                  />
                 )}
 
                 {showResultForm && (
@@ -633,36 +668,6 @@ export default function PromptDetailPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
-      {/* Purchase Modal */}
-      {showPurchaseModal && (
-        <div className="modal-overlay" onClick={() => setShowPurchaseModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-semibold mb-4">購入確認</h2>
-            <p className="text-[var(--text-secondary)] mb-2">
-              「{prompt.title}」を購入しますか？
-            </p>
-            <p className="text-2xl font-bold mb-6">
-              <span className="text-[var(--gold)]">◆</span>
-              {prompt.priceJPY.toLocaleString()}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={handlePurchase}
-                disabled={purchasing}
-                className="btn btn-primary flex-1"
-              >
-                {purchasing ? '処理中...' : '購入する'}
-              </button>
-              <button
-                onClick={() => setShowPurchaseModal(false)}
-                className="btn btn-secondary"
-              >
-                キャンセル
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

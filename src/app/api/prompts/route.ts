@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { promptSchema } from '@/lib/validations'
+import { createErrorResponse, AppError, ErrorCodes, logError } from '@/lib/errors'
 
 // GET /api/prompts - List prompts
 export async function GET(request: NextRequest) {
@@ -12,7 +13,15 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const sort = searchParams.get('sort') || 'trending'
     const free = searchParams.get('free') === 'true'
+    const priceRange = searchParams.get('price')
+    const minRating = searchParams.get('rating')
+    const tags = searchParams.get('tags')
     const limit = parseInt(searchParams.get('limit') || '50')
+
+    // キャッシュ設定（検索クエリがない場合のみキャッシュ）
+    const cacheOptions = !q && !category && sort === 'trending' 
+      ? { next: { revalidate: 60 } } // 60秒キャッシュ
+      : { cache: 'no-store' } // 検索結果はキャッシュしない
 
     // Build where clause
     const where: Record<string, unknown> = {
@@ -33,6 +42,35 @@ export async function GET(request: NextRequest) {
 
     if (free) {
       where.priceJPY = 0
+    }
+
+    // Price range filter
+    if (priceRange && !free) {
+      switch (priceRange) {
+        case 'free':
+          where.priceJPY = 0
+          break
+        case '0-500':
+          where.priceJPY = { lte: 500 }
+          break
+        case '500-1000':
+          where.priceJPY = { gte: 500, lte: 1000 }
+          break
+        case '1000-5000':
+          where.priceJPY = { gte: 1000, lte: 5000 }
+          break
+        case '5000+':
+          where.priceJPY = { gte: 5000 }
+          break
+      }
+    }
+
+    // Tags filter
+    if (tags) {
+      const tagArray = tags.split(',').map((tag) => tag.trim())
+      where.tags = {
+        contains: tagArray[0], // 最初のタグで検索（簡易実装）
+      }
     }
 
     // Determine order
@@ -102,14 +140,28 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Sort by trending or rating
-    if (sort === 'trending') {
-      promptsWithStats.sort((a, b) => b.trendingScore - a.trendingScore)
-    } else if (sort === 'rating') {
-      promptsWithStats.sort((a, b) => b.avgRating - a.avgRating)
+    // Filter by minimum rating
+    let filteredPrompts = promptsWithStats
+    if (minRating) {
+      const minRatingNum = parseFloat(minRating)
+      filteredPrompts = promptsWithStats.filter((p) => p.avgRating >= minRatingNum)
     }
 
-    return NextResponse.json({ prompts: promptsWithStats })
+    // Sort by trending or rating
+    if (sort === 'trending') {
+      filteredPrompts.sort((a, b) => b.trendingScore - a.trendingScore)
+    } else if (sort === 'rating') {
+      filteredPrompts.sort((a, b) => b.avgRating - a.avgRating)
+    }
+
+    const response = NextResponse.json({ prompts: filteredPrompts })
+    
+    // キャッシュヘッダーを設定（検索クエリがない場合のみ）
+    if (!q && !category && sort === 'trending') {
+      response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120')
+    }
+    
+    return response
   } catch (error) {
     console.error('Error fetching prompts:', error)
     return NextResponse.json(
@@ -124,16 +176,17 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
+      throw new AppError(ErrorCodes.UNAUTHORIZED, 'ログインが必要です', 401)
     }
 
     const body = await request.json()
     const result = promptSchema.safeParse(body)
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.issues[0].message },
-        { status: 400 }
+      throw new AppError(
+        ErrorCodes.VALIDATION_ERROR,
+        result.error.issues[0].message,
+        400
       )
     }
 
@@ -147,10 +200,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(prompt, { status: 201 })
   } catch (error) {
-    console.error('Error creating prompt:', error)
-    return NextResponse.json(
-      { error: 'プロンプトの作成に失敗しました' },
-      { status: 500 }
-    )
+    logError(error, { endpoint: '/api/prompts', method: 'POST' })
+    const { error: errorResponse, statusCode } = createErrorResponse(error)
+    return NextResponse.json(errorResponse, { status: statusCode })
   }
 }
