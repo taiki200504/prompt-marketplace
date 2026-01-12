@@ -261,12 +261,30 @@ SQLiteは開発用です。本番環境ではPostgreSQLを使用します。
 1. https://supabase.com/ でアカウント作成
 2. "New project" をクリック
 3. プロジェクト情報を入力
-4. Settings → Database → Connection string をコピー
+   - **Database Password**: 強力なパスワードを設定（後から変更可能）
+   - このパスワードは**必ず保存**してください（後で確認できますが、忘れると接続できません）
 
-5. **`.env`ファイルを更新**
+4. **Database Passwordの確認・変更方法**:
+   - Supabaseダッシュボード → プロジェクト選択
+   - **Settings** (⚙️) → **Database**
+   - **Database password** セクションで確認・変更可能
+   - 変更する場合は "Reset database password" をクリック
+
+5. **Connection stringの取得**:
+   - **Settings** → **Database** → **Connection string** タブ
+   - **URI** または **Connection pooling** を選択
+   - 接続文字列をコピー（パスワードが含まれています）
+   - 形式: `postgresql://postgres:[YOUR-PASSWORD]@db.xxxxx.supabase.co:5432/postgres`
+
+6. **`.env`ファイルを更新**
    ```env
-   DATABASE_URL="postgresql://postgres:パスワード@db.xxxxx.supabase.co:5432/postgres"
+   DATABASE_URL="postgresql://postgres:あなたのパスワード@db.xxxxx.supabase.co:5432/postgres"
    ```
+   ⚠️ **注意**: パスワードに特殊文字（`@`, `#`, `%`など）が含まれている場合は、URLエンコードが必要です
+   - `@` → `%40`
+   - `#` → `%23`
+   - `%` → `%25`
+   - など
 
 6. **Prismaスキーマを更新** (`prisma/schema.prisma`)
    ```prisma
@@ -289,20 +307,26 @@ SQLiteは開発用です。本番環境ではPostgreSQLを使用します。
 
 Vercelダッシュボード → Settings → Environment Variables で以下を設定：
 
-| 変数名 | 値 |
-|--------|-----|
-| DATABASE_URL | PostgreSQL接続文字列 |
-| NEXTAUTH_SECRET | 生成したシークレット |
-| NEXTAUTH_URL | `https://あなたのドメイン` |
-| GEMINI_API_KEY | Gemini APIキー（AI改善提案用） |
-| OPENAI_API_KEY | OpenAI APIキー（プロンプト実行用） |
-| STRIPE_SECRET_KEY | Stripeシークレットキー |
-| STRIPE_WEBHOOK_SECRET | Webhook署名シークレット |
-| STRIPE_PUBLISHABLE_KEY | Stripe公開キー |
-| GOOGLE_CLIENT_ID | (任意) |
-| GOOGLE_CLIENT_SECRET | (任意) |
-| GITHUB_ID | (任意) |
-| GITHUB_SECRET | (任意) |
+| 変数名 | 値 | 取得方法 |
+|--------|-----|---------|
+| DATABASE_URL | PostgreSQL接続文字列 | Supabase: Settings → Database → Connection string (URI) |
+| NEXTAUTH_SECRET | 生成したシークレット | `openssl rand -base64 32` で生成 |
+| NEXTAUTH_URL | `https://あなたのドメイン` | VercelのデプロイURL |
+| GEMINI_API_KEY | Gemini APIキー（AI改善提案用） | Google AI Studio |
+| OPENAI_API_KEY | OpenAI APIキー（プロンプト実行用） | OpenAI Platform |
+| STRIPE_SECRET_KEY | Stripeシークレットキー | Stripe Dashboard |
+| STRIPE_WEBHOOK_SECRET | Webhook署名シークレット | Stripe Dashboard |
+| STRIPE_PUBLISHABLE_KEY | Stripe公開キー | Stripe Dashboard |
+| GOOGLE_CLIENT_ID | (任意) | Google Cloud Console |
+| GOOGLE_CLIENT_SECRET | (任意) | Google Cloud Console |
+| GITHUB_ID | (任意) | GitHub Settings → Developer settings |
+| GITHUB_SECRET | (任意) | GitHub Settings → Developer settings |
+
+**SupabaseのDATABASE_URL設定時の注意点**:
+- Supabaseダッシュボード → **Settings** → **Database** → **Connection string** タブ
+- **URI** を選択（Connection poolingではなく通常のURI）
+- 接続文字列をコピーしてそのままVercelの環境変数に設定
+- パスワードに特殊文字が含まれている場合は、Supabaseが自動的にURLエンコードしてくれます
 
 ### デプロイコマンド
 
