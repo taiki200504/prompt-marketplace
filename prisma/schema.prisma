@@ -1,0 +1,502 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// PostgreSQL対応: 環境変数でプロバイダーを切り替え可能
+// 開発環境: sqlite, 本番環境: postgresql
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ユーザー関連
+// =============================================================================
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  username       String       @unique
+  passwordHash   String
+  displayName    String?
+  bio            String?
+  avatarUrl      String?
+  credits        Int          @default(1000) // Start with 1000 free credits
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  prompts          Prompt[]
+  purchases        Purchase[]
+  reviews          Review[]
+  resultLogs       ResultLog[]
+  favorites        Favorite[]
+  creditHistory    CreditHistory[]
+  wallet           Wallet?
+  promptExecutions PromptExecution[]
+  usageQuotas      UsageQuota[]
+  onboarding       UserOnboarding?
+  
+  // リファラル関連
+  referrals        Referral[]        @relation("Referrer")
+  referredBy       ReferralSignup?
+  
+  // ログイン履歴（不正検知用）
+  loginLogs        LoginLog[]
+  
+  // 通知
+  notifications    Notification[]
+}
+
+model LoginLog {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  ipAddress   String
+  userAgent   String?
+  fingerprint String?  // ブラウザフィンガープリント
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([ipAddress])
+}
+
+model UserOnboarding {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  userType        String?  // 'creator' | 'buyer' | 'both'
+  
+  // 共通ステップ
+  profileCompleted    Boolean @default(false)
+  firstPromptViewed   Boolean @default(false)
+  
+  // クリエイター向けステップ
+  firstPromptCreated  Boolean @default(false)
+  firstPromptPublished Boolean @default(false)
+  bankAccountAdded    Boolean @default(false)
+  firstSale           Boolean @default(false)
+  
+  // バイヤー向けステップ
+  firstPromptTried    Boolean @default(false)
+  firstPurchase       Boolean @default(false)
+  firstReview         Boolean @default(false)
+  firstResultLog      Boolean @default(false)
+  paymentMethodAdded  Boolean @default(false)
+  
+  // ツアー表示フラグ
+  tourShown           Boolean @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// =============================================================================
+// プロンプト関連
+// =============================================================================
+
+model Prompt {
+  id               String       @id @default(cuid())
+  title            String
+  shortDescription String
+  category         String       // Marketing / Dev / Design / Career / Study / Fun / Other
+  promptBody       String       // The actual prompt template
+  usageGuide       String?
+  exampleInput     String
+  exampleOutput    String
+  priceJPY         Int          @default(0) // 0 = free
+  tags             String       @default("") // Comma-separated tags for simplicity
+  thumbnailUrl     String?      // プロンプトのサムネイル画像URL
+  isPublished      Boolean      @default(false)
+  publishedAt      DateTime?
+  views            Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  
+  // バージョン管理
+  currentVersion   Int          @default(1)
+
+  // Relations
+  ownerId          String
+  owner            User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  purchases        Purchase[]
+  reviews          Review[]
+  resultLogs       ResultLog[]
+  favorites        Favorite[]
+  executions       PromptExecution[]
+  versions         PromptVersion[]
+
+  @@index([ownerId])
+  @@index([category])
+  @@index([isPublished])
+  @@index([publishedAt])
+}
+
+// バージョン管理
+model PromptVersion {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  
+  version          Int      // バージョン番号
+  title            String
+  shortDescription String
+  promptBody       String
+  usageGuide       String?
+  exampleInput     String
+  exampleOutput    String
+  changeLog        String?  // 変更内容の説明
+  
+  // リレーション
+  promptId         String
+  prompt           Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  
+  @@unique([promptId, version])
+  @@index([promptId])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// 購入・決済関連
+// =============================================================================
+
+model Purchase {
+  id              String    @id @default(cuid())
+  createdAt       DateTime  @default(now())
+  priceAtPurchase Int       @default(0) // Price at the time of purchase
+  
+  // 決済情報
+  status          String    @default("completed") // pending, completed, refunded
+  paymentProvider String    @default("credits")   // credits, stripe, orynth
+  stripeSessionId String?   @unique
+  stripePaymentId String?
+  orynthTxId      String?   // Orynth取引ID
+  
+  // 返金情報
+  refundedAt      DateTime?
+  refundReason    String?
+
+  // Relations
+  userId      String
+  promptId    String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt      Prompt    @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  
+  // 関連取引
+  transactions Transaction[]
+
+  @@unique([userId, promptId])
+  @@index([userId])
+  @@index([promptId])
+  @@index([status])
+  @@index([stripeSessionId])
+}
+
+// =============================================================================
+// ウォレット・収益関連
+// =============================================================================
+
+model Wallet {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  balance         Int      @default(0)  // 残高（円）
+  pendingBalance  Int      @default(0)  // 保留中の収益（返金期間中）
+  totalEarned     Int      @default(0)  // 累計収益
+  totalWithdrawn  Int      @default(0)  // 累計出金額
+  
+  // Orynth連携
+  orynthWalletId  String?  // OrynthウォレットID
+  orynthConnected Boolean  @default(false)
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+  payoutRequests  PayoutRequest[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  type        String   // purchase_revenue, platform_fee, payout, refund, referral_reward
+  amount      Int      // 金額（円）- 負の値も可
+  description String?
+  
+  // リレーション
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  purchaseId  String?  // 関連するPurchase
+  purchase    Purchase? @relation(fields: [purchaseId], references: [id])
+  
+  @@index([walletId])
+  @@index([createdAt])
+  @@index([type])
+}
+
+model PayoutRequest {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  processedAt     DateTime?
+  status          String   @default("pending") // pending, processing, completed, failed, cancelled
+  amount          Int
+  fee             Int      @default(250)  // 振込手数料
+  netAmount       Int      // 実際の振込額 (amount - fee)
+  
+  // 振込先情報
+  bankName        String
+  branchName      String
+  accountType     String   // 普通 / 当座
+  accountNumber   String
+  accountHolder   String
+  
+  // 処理情報
+  failureReason   String?
+  transferId      String?  // 銀行振込ID
+  
+  walletId        String
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  @@index([walletId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// レビュー・成果記録
+// =============================================================================
+
+model Review {
+  id        String    @id @default(cuid())
+  rating    Int       // 1-5
+  comment   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  userId    String
+  promptId  String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt    Prompt    @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promptId]) // One review per user per prompt
+  @@index([userId])
+  @@index([promptId])
+}
+
+model ResultLog {
+  id          String    @id @default(cuid())
+  metricType  String    // time_saved / revenue / quality / other
+  metricValue Float
+  metricUnit  String    // min / JPY / % / score / other
+  note        String?
+  isFlagged   Boolean   @default(false)  // 異常値フラグ
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  userId      String
+  promptId    String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt      Prompt    @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([promptId])
+  @@index([metricType])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// お気に入り・クレジット履歴
+// =============================================================================
+
+model Favorite {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+
+  // Relations
+  userId    String
+  promptId  String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt    Prompt    @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promptId])
+  @@index([userId])
+  @@index([promptId])
+}
+
+model CreditHistory {
+  id          String    @id @default(cuid())
+  amount      Int       // Positive for add, negative for spend
+  type        String    // purchase / sale / bonus / refund / execution
+  description String
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// プロンプト実行・API使用量管理
+// =============================================================================
+
+model PromptExecution {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  
+  // 実行情報
+  inputVariables String   // JSON形式で保存
+  model          String   // gpt-4o, gpt-4o-mini, etc.
+  outputText     String
+  tokensUsed     Int
+  latencyMs      Int
+  
+  // コスト情報
+  costCredits    Int      @default(0)  // 消費クレジット
+  
+  // セキュリティ
+  wasBlocked     Boolean  @default(false)  // インジェクション検知でブロックされたか
+  blockReason    String?
+  
+  // リレーション
+  userId         String
+  promptId       String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt         Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([promptId])
+  @@index([createdAt])
+  @@index([model])
+}
+
+model UsageQuota {
+  id              String   @id @default(cuid())
+  userId          String
+  date            DateTime @default(now())
+  
+  // 日次制限
+  freeExecutions  Int      @default(0)   // 本日の無料実行回数
+  paidExecutions  Int      @default(0)   // 本日の有料実行回数
+  tokensUsed      Int      @default(0)   // 本日の総トークン使用量
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model ApiCostLog {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  model     String
+  tokens    Int
+  costUSD   Float
+  
+  @@index([date])
+  @@index([model])
+}
+
+// =============================================================================
+// リファラルプログラム
+// =============================================================================
+
+model Referral {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  
+  referrerCode    String   @unique // 紹介コード (8文字)
+  referrerId      String
+  referrer        User     @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  
+  // 統計
+  totalSignups    Int      @default(0)
+  totalRewards    Int      @default(0)
+  
+  // 紹介されたユーザー
+  referredUsers   ReferralSignup[]
+  
+  @@index([referrerId])
+  @@index([referrerCode])
+}
+
+model ReferralSignup {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  
+  referralId      String
+  referral        Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  
+  referredUserId  String   @unique
+  referredUser    User     @relation(fields: [referredUserId], references: [id], onDelete: Cascade)
+  
+  // 報酬ステータス
+  rewardStatus    String   @default("pending") // pending, eligible, paid, fraudulent
+  rewardAmount    Int      @default(0)
+  paidAt          DateTime?
+  
+  // 不正検知
+  isSuspicious    Boolean  @default(false)
+  suspicionReason String?
+  
+  @@index([referralId])
+  @@index([rewardStatus])
+}
+
+// =============================================================================
+// Orynth連携
+// =============================================================================
+
+model OrynthActivity {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  type        String   // new_prompt, milestone, update
+  title       String
+  description String?
+  link        String?
+  
+  // Orynth側のレスポンス
+  orynthPostId String?
+  isPosted    Boolean  @default(false)
+  postedAt    DateTime?
+  
+  @@index([type])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// 通知システム
+// =============================================================================
+
+model Notification {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  type        String   // purchase, review, sale, follow, system, achievement
+  title       String
+  message     String
+  link        String?  // クリック時の遷移先
+  
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  
+  // メタデータ（JSON形式で追加情報を保存）
+  metadata    String?  // JSON: { promptId, reviewId, amount, etc. }
+  
+  // リレーション
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
