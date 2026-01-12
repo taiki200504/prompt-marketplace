@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import PromptCard from '@/components/PromptCard'
 
+// 動的レンダリングを強制（ビルド時の静的生成を無効化）
+export const dynamic = 'force-dynamic'
+
 async function getPrompts(sort: 'trending' | 'new' | 'free', limit: number = 6) {
   const where: Record<string, unknown> = { isPublished: true }
   if (sort === 'free') {
