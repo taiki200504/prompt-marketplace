@@ -17,7 +17,7 @@ interface Payment {
 }
 
 export default function PaymentsPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)

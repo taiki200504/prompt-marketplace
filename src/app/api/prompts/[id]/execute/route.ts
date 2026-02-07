@@ -122,7 +122,7 @@ export async function POST(
     }
 
     // 9. 各変数のセキュリティチェック
-    for (const [key, value] of Object.entries(variables)) {
+    for (const [, value] of Object.entries(variables)) {
       const securityCheck = checkInputSecurity(value)
       if (!securityCheck.isSafe) {
         // 不正入力をログに記録

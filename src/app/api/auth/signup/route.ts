@@ -25,14 +25,8 @@ export async function POST(request: Request) {
     })
 
     if (existingUser) {
-      if (existingUser.email === email) {
-        return NextResponse.json(
-          { error: 'このメールアドレスは既に使用されています' },
-          { status: 400 }
-        )
-      }
       return NextResponse.json(
-        { error: 'このユーザー名は既に使用されています' },
+        { error: 'このメールアドレスまたはユーザー名は既に使用されています' },
         { status: 400 }
       )
     }

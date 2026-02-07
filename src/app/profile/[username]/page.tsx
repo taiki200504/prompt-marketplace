@@ -44,8 +44,9 @@ export default async function ProfilePage({ params }: Props) {
         ? prompt.reviews.reduce((sum, r) => sum + r.rating, 0) / prompt.reviews.length
         : 0
 
+    const now = new Date()
     const daysSincePublished = prompt.publishedAt
-      ? Math.floor((Date.now() - new Date(prompt.publishedAt).getTime()) / (1000 * 60 * 60 * 24))
+      ? Math.floor((now.getTime() - new Date(prompt.publishedAt).getTime()) / (1000 * 60 * 60 * 24))
       : 999
 
     const newnessBoost = Math.max(0, 7 - daysSincePublished) * 0.5

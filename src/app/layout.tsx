@@ -1,16 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 import Header from "@/components/Header";
 import Providers from "@/components/Providers";
 import PWAInstall from "@/components/PWAInstall";
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-sans",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "PromptMarket - Premium AI Prompt Marketplace",
@@ -54,13 +47,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className={dmSans.variable}>
+    <html lang="ja">
       <head>
         <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${dmSans.className} noise-bg`}>
+      <body className="noise-bg">
         <Providers>
           <Header />
           <main className="min-h-screen">{children}</main>
@@ -89,19 +82,19 @@ export default function RootLayout({
                   </h4>
                   <ul className="space-y-3">
                     <li>
-                      <a href="/prompts" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
+                      <Link href="/prompts" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
                         すべてのプロンプト
-                      </a>
+                      </Link>
                     </li>
                     <li>
-                      <a href="/prompts?sort=trending" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
+                      <Link href="/prompts?sort=trending" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
                         トレンド
-                      </a>
+                      </Link>
                     </li>
                     <li>
-                      <a href="/prompts?free=true" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
+                      <Link href="/prompts?free=true" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
                         無料プロンプト
-                      </a>
+                      </Link>
                     </li>
                   </ul>
                 </div>

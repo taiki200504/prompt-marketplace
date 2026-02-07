@@ -18,7 +18,7 @@ const CATEGORIES = [
 ]
 
 export default function CreatePromptPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const { showToast } = useToast()
   

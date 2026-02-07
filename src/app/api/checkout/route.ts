@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
       default:
         return NextResponse.json(
-          { error: `サポートされていない決済方法です: ${provider}` },
+          { error: 'サポートされていない決済方法です' },
           { status: 400 }
         )
     }

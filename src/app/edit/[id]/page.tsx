@@ -28,7 +28,7 @@ interface VersionInfo {
 
 export default function EditPromptPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const { showToast } = useToast()
   
