@@ -14,7 +14,7 @@ interface CreditHistoryItem {
 }
 
 export default function CreditsPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const { showToast } = useToast()
   

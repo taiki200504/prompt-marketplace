@@ -27,7 +27,7 @@ export default function PWAInstall() {
 
     // インストール済みチェック
     if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true)
+      setIsInstalled(true) // eslint-disable-line react-hooks/set-state-in-effect
       return
     }
 

@@ -18,11 +18,6 @@ export async function GET(request: NextRequest) {
     const tags = searchParams.get('tags')
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    // キャッシュ設定（検索クエリがない場合のみキャッシュ）
-    const cacheOptions = !q && !category && sort === 'trending' 
-      ? { next: { revalidate: 60 } } // 60秒キャッシュ
-      : { cache: 'no-store' } // 検索結果はキャッシュしない
-
     // Build where clause
     const where: Record<string, unknown> = {
       isPublished: true,

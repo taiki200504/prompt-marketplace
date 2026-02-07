@@ -162,7 +162,7 @@ export async function PATCH(request: NextRequest) {
  * POST /api/user/onboarding/reset
  * オンボーディングをリセット（開発用）
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

@@ -14,12 +14,11 @@ export default function Header() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     const handleScroll = () => {
       setScrolled(window.scrollY > 10)
     }
-    // Initial check
     handleScroll()
+    setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])

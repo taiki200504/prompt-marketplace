@@ -25,12 +25,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    // クライアントサイドで保存されたロケールを取得
     const savedLocale = localStorage.getItem(LOCALE_KEY) as Locale | null
     if (savedLocale && (savedLocale === 'ja' || savedLocale === 'en')) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocaleState(savedLocale)
     } else {
-      // ブラウザの言語設定を確認
       const browserLang = navigator.language.split('-')[0]
       if (browserLang === 'en') {
         setLocaleState('en')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 interface Version {
   id: string
@@ -23,13 +23,7 @@ export default function VersionHistory({ promptId, currentVersion, isOwner }: Ve
   const [isOpen, setIsOpen] = useState(false)
   const [restoring, setRestoring] = useState<number | null>(null)
 
-  useEffect(() => {
-    if (isOpen && isOwner && versions.length === 0) {
-      fetchVersions()
-    }
-  }, [isOpen, isOwner])
-
-  const fetchVersions = async () => {
+  const fetchVersions = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch(`/api/prompts/${promptId}/versions`)
@@ -42,7 +36,13 @@ export default function VersionHistory({ promptId, currentVersion, isOwner }: Ve
     } finally {
       setLoading(false)
     }
-  }
+  }, [promptId])
+
+  useEffect(() => {
+    if (isOpen && isOwner && versions.length === 0) {
+      fetchVersions()
+    }
+  }, [isOpen, isOwner, fetchVersions, versions.length])
 
   const handleRestore = async (version: number) => {
     if (!confirm(`v${version}に復元しますか？現在のバージョンはバックアップされます。`)) {

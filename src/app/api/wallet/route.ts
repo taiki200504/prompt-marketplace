@@ -96,7 +96,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
     }
 
-    const { cursor, limit = 20, type } = await request.json()
+    const body = await request.json()
+    const cursor = body.cursor
+    const limit = Math.min(Math.max(Number(body.limit) || 20, 1), 100)
+    const type = typeof body.type === 'string' ? body.type : undefined
 
     const wallet = await prisma.wallet.findUnique({
       where: { userId: session.user.id },
