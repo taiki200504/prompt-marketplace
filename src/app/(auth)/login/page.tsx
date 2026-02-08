@@ -79,6 +79,7 @@ function LoginForm() {
               className="input"
               placeholder="email@example.com"
               required
+              autoComplete="email"
             />
           </div>
 
@@ -91,6 +92,7 @@ function LoginForm() {
               className="input"
               placeholder="••••••••"
               required
+              autoComplete="current-password"
             />
           </div>
 

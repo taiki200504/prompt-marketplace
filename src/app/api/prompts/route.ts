@@ -107,8 +107,9 @@ export async function GET(request: NextRequest) {
           ? prompt.reviews.reduce((sum, r) => sum + r.rating, 0) / prompt.reviews.length
           : 0
 
+      const now = new Date()
       const daysSincePublished = prompt.publishedAt
-        ? Math.floor((Date.now() - new Date(prompt.publishedAt).getTime()) / (1000 * 60 * 60 * 24))
+        ? Math.floor((now.getTime() - new Date(prompt.publishedAt).getTime()) / (1000 * 60 * 60 * 24))
         : 999
 
       const newnessBoost = Math.max(0, 7 - daysSincePublished) * 0.5
@@ -159,9 +160,11 @@ export async function GET(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Error fetching prompts:', error)
+    const isDatabaseError = error instanceof Error &&
+      (error.message.includes('prisma') || error.message.includes('database') || error.message.includes('connect'))
     return NextResponse.json(
-      { error: 'プロンプトの取得に失敗しました' },
-      { status: 500 }
+      { error: 'プロンプトの取得に失敗しました', prompts: [] },
+      { status: isDatabaseError ? 503 : 500 }
     )
   }
 }

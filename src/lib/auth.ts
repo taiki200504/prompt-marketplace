@@ -19,24 +19,32 @@ export const authOptions: NextAuthOptions = {
           throw new Error('メールアドレスとパスワードを入力してください')
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        })
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+          })
 
-        if (!user) {
-          throw new Error('メールアドレスまたはパスワードが正しくありません')
-        }
+          if (!user) {
+            throw new Error('メールアドレスまたはパスワードが正しくありません')
+          }
 
-        const isValid = await bcrypt.compare(credentials.password, user.passwordHash)
-        if (!isValid) {
-          throw new Error('メールアドレスまたはパスワードが正しくありません')
-        }
+          const isValid = await bcrypt.compare(credentials.password, user.passwordHash)
+          if (!isValid) {
+            throw new Error('メールアドレスまたはパスワードが正しくありません')
+          }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.displayName || user.username,
-          username: user.username,
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.displayName || user.username,
+            username: user.username,
+          }
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('メールアドレス')) {
+            throw error
+          }
+          console.error('Auth DB error:', error)
+          throw new Error('サーバーに接続できません。しばらく経ってからお試しください。')
         }
       },
     }),
@@ -71,39 +79,44 @@ export const authOptions: NextAuthOptions = {
           return false
         }
 
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email },
-        })
+        try {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+          })
 
-        if (!existingUser) {
-          // 新規ユーザー作成
-          const username = user.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20)
-          
-          // ユーザー名の重複チェック
-          let finalUsername = username
-          let counter = 1
-          while (await prisma.user.findUnique({ where: { username: finalUsername } })) {
-            finalUsername = `${username}${counter}`
-            counter++
-          }
+          if (!existingUser) {
+            // 新規ユーザー作成
+            const username = user.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20)
 
-          await prisma.user.create({
-            data: {
-              email: user.email,
-              username: finalUsername,
-              passwordHash: '', // ソーシャルログインなのでパスワード不要
-              displayName: user.name || finalUsername,
-              avatarUrl: user.image || null,
-              credits: 1000,
-              creditHistory: {
-                create: {
-                  amount: 1000,
-                  type: 'bonus',
-                  description: '新規登録ボーナス',
+            // ユーザー名の重複チェック
+            let finalUsername = username
+            let counter = 1
+            while (await prisma.user.findUnique({ where: { username: finalUsername } })) {
+              finalUsername = `${username}${counter}`
+              counter++
+            }
+
+            await prisma.user.create({
+              data: {
+                email: user.email,
+                username: finalUsername,
+                passwordHash: '', // ソーシャルログインなのでパスワード不要
+                displayName: user.name || finalUsername,
+                avatarUrl: user.image || null,
+                credits: 1000,
+                creditHistory: {
+                  create: {
+                    amount: 1000,
+                    type: 'bonus',
+                    description: '新規登録ボーナス',
+                  },
                 },
               },
-            },
-          })
+            })
+          }
+        } catch (error) {
+          console.error('Social sign-in DB error:', error)
+          return false
         }
       }
       return true
@@ -113,12 +126,16 @@ export const authOptions: NextAuthOptions = {
         // 初回ログイン時
         if (account?.provider === 'google' || account?.provider === 'github') {
           // ソーシャルログインの場合、DBからユーザー情報を取得
-          const dbUser = await prisma.user.findUnique({
-            where: { email: user.email! },
-          })
-          if (dbUser) {
-            token.id = dbUser.id
-            token.username = dbUser.username
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { email: user.email! },
+            })
+            if (dbUser) {
+              token.id = dbUser.id
+              token.username = dbUser.username
+            }
+          } catch (error) {
+            console.error('JWT callback DB error:', error)
           }
         } else {
           token.id = user.id

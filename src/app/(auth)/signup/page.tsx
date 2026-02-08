@@ -91,6 +91,7 @@ export default function SignupPage() {
                 placeholder="your_username"
                 required
                 minLength={3}
+                autoComplete="username"
               />
               <p className="text-[11px] text-[var(--text-muted)] mt-1">3文字以上、英数字とアンダースコア</p>
             </div>
@@ -104,6 +105,7 @@ export default function SignupPage() {
                 className="input"
                 placeholder="email@example.com"
                 required
+                autoComplete="email"
               />
             </div>
 
@@ -117,6 +119,7 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 required
                 minLength={6}
+                autoComplete="new-password"
               />
               <p className="text-[11px] text-[var(--text-muted)] mt-1">6文字以上</p>
             </div>
@@ -139,9 +142,7 @@ export default function SignupPage() {
         </p>
 
         <p className="text-center text-[11px] text-[var(--text-muted)] mt-4">
-          登録することで
-          <Link href="/terms" className="hover:underline mx-0.5">利用規約</Link>
-          に同意したものとみなされます
+          登録することで利用規約に同意したものとみなされます
         </p>
       </div>
     </div>
