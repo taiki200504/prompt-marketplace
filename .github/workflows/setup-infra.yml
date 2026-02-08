@@ -1,0 +1,128 @@
+name: Setup Infrastructure
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Supabase CLI
+        run: |
+          curl -sL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar xz
+          sudo mv supabase /usr/local/bin/
+
+      - name: Create Supabase project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          # List existing projects
+          echo "=== Existing Supabase projects ==="
+          supabase projects list
+
+          # Create new project
+          echo "=== Creating new project ==="
+          supabase projects create prompt-marketplace \
+            --db-password "PromptMkt2026Secure!" \
+            --region ap-northeast-1 \
+            --org-id "$(supabase orgs list --output json | jq -r '.[0].id')" || echo "Project may already exist"
+
+          # Wait for project to be ready
+          echo "=== Waiting for project to be ready ==="
+          sleep 30
+
+          # Get project ref
+          PROJECT_REF=$(supabase projects list --output json | jq -r '.[] | select(.name == "prompt-marketplace") | .id')
+          echo "Project ref: $PROJECT_REF"
+
+          if [ -z "$PROJECT_REF" ]; then
+            echo "ERROR: Could not find project"
+            exit 1
+          fi
+
+          # Construct DATABASE_URL
+          DATABASE_URL="postgresql://postgres:PromptMkt2026Secure!@db.${PROJECT_REF}.supabase.co:5432/postgres"
+          echo "DATABASE_URL=${DATABASE_URL}" >> $GITHUB_OUTPUT
+          echo "PROJECT_REF=${PROJECT_REF}" >> $GITHUB_OUTPUT
+
+          # Set as GitHub secret for future use
+          echo "$DATABASE_URL" | gh secret set DATABASE_URL --repo ${{ github.repository }}
+          echo "$PROJECT_REF" | gh secret set SUPABASE_PROJECT_REF --repo ${{ github.repository }}
+        id: supabase
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Push Prisma schema
+        env:
+          DATABASE_URL: ${{ steps.supabase.outputs.DATABASE_URL }}
+        run: |
+          npm ci
+          npx prisma db push --accept-data-loss
+          echo "Schema pushed successfully!"
+
+      - name: Set Vercel environment variables
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          DATABASE_URL: ${{ steps.supabase.outputs.DATABASE_URL }}
+        run: |
+          npm i -g vercel
+
+          # Link Vercel project
+          vercel link --yes --token=$VERCEL_TOKEN 2>/dev/null || true
+
+          # Get project info
+          PROJECTS=$(curl -s "https://api.vercel.com/v9/projects" \
+            -H "Authorization: Bearer $VERCEL_TOKEN")
+          PROJECT_ID=$(echo "$PROJECTS" | jq -r '.projects[] | select(.name | contains("prompt-marketplace")) | .id' | head -1)
+
+          if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then
+            echo "Could not find Vercel project. List all projects:"
+            echo "$PROJECTS" | jq '.projects[].name'
+            exit 1
+          fi
+
+          echo "Vercel Project ID: $PROJECT_ID"
+
+          # Set environment variables on Vercel
+          for ENV in production preview development; do
+            curl -s -X POST "https://api.vercel.com/v10/projects/${PROJECT_ID}/env" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"DATABASE_URL\",\"value\":\"${DATABASE_URL}\",\"target\":[\"${ENV}\"],\"type\":\"encrypted\"}" \
+              2>/dev/null || true
+          done
+
+          # Set NEXTAUTH_SECRET
+          NEXTAUTH_SECRET=$(openssl rand -base64 32)
+          for ENV in production preview development; do
+            curl -s -X POST "https://api.vercel.com/v10/projects/${PROJECT_ID}/env" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"NEXTAUTH_SECRET\",\"value\":\"${NEXTAUTH_SECRET}\",\"target\":[\"${ENV}\"],\"type\":\"encrypted\"}" \
+              2>/dev/null || true
+          done
+
+          # Set NEXTAUTH_URL
+          curl -s -X POST "https://api.vercel.com/v10/projects/${PROJECT_ID}/env" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"key":"NEXTAUTH_URL","value":"https://prompt-marketplace-tau.vercel.app","target":["production"],"type":"plain"}' \
+            2>/dev/null || true
+
+          echo "Vercel environment variables set!"
+
+      - name: Summary
+        run: |
+          echo "## Infrastructure Setup Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Supabase project created (region: ap-northeast-1)" >> $GITHUB_STEP_SUMMARY
+          echo "- Prisma schema pushed to database" >> $GITHUB_STEP_SUMMARY
+          echo "- Vercel environment variables configured" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Next: Merge the PR to trigger Vercel deploy" >> $GITHUB_STEP_SUMMARY
