@@ -10,7 +10,7 @@ import SocialLoginButtons from '@/components/SocialLoginButtons'
 export default function SignupPage() {
   const router = useRouter()
   const { showToast } = useToast()
-  
+
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -34,7 +34,6 @@ export default function SignupPage() {
         return
       }
 
-      // Auto login after signup
       const result = await signIn('credentials', {
         email,
         password,
@@ -42,7 +41,7 @@ export default function SignupPage() {
       })
 
       if (result?.ok) {
-        showToast('アカウントを作成しました！1,000クレジットをプレゼント🎁', 'success')
+        showToast('アカウントを作成しました！1,000クレジットをプレゼント', 'success')
         router.push('/')
         router.refresh()
       }
@@ -55,18 +54,35 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold mb-2">アカウント作成</h1>
+          <Link href="/" className="inline-block mb-6">
+            <span className="text-xl font-semibold tracking-tight">
+              <span className="text-gradient">Prompt</span>
+              <span className="text-[var(--text-primary)]">Market</span>
+            </span>
+          </Link>
+          <h1 className="text-xl font-bold mb-1.5">アカウント作成</h1>
           <p className="text-sm text-[var(--text-muted)]">
             無料で始めて、1,000クレジットをゲット
           </p>
         </div>
 
         <div className="card">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <SocialLoginButtons />
+
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[var(--border-subtle)]" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-[var(--bg-secondary)] px-3 text-[var(--text-muted)]">または</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
-              <label className="block text-sm font-medium mb-2">ユーザー名</label>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">ユーザー名</label>
               <input
                 type="text"
                 value={username}
@@ -76,11 +92,11 @@ export default function SignupPage() {
                 required
                 minLength={3}
               />
-              <p className="text-xs text-[var(--text-muted)] mt-1">3文字以上、英数字とアンダースコア</p>
+              <p className="text-[11px] text-[var(--text-muted)] mt-1">3文字以上、英数字とアンダースコア</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">メールアドレス</label>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">メールアドレス</label>
               <input
                 type="email"
                 value={email}
@@ -92,7 +108,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">パスワード</label>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">パスワード</label>
               <input
                 type="password"
                 value={password}
@@ -102,7 +118,7 @@ export default function SignupPage() {
                 required
                 minLength={6}
               />
-              <p className="text-xs text-[var(--text-muted)] mt-1">6文字以上</p>
+              <p className="text-[11px] text-[var(--text-muted)] mt-1">6文字以上</p>
             </div>
 
             <button
@@ -113,35 +129,20 @@ export default function SignupPage() {
               {loading ? '作成中...' : 'アカウントを作成'}
             </button>
           </form>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[var(--border-subtle)]" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-[var(--bg-secondary)] px-4 text-[var(--text-muted)]">または</span>
-            </div>
-          </div>
-
-          <SocialLoginButtons />
-
-          <div className="divider" />
-
-          <p className="text-center text-sm text-[var(--text-muted)]">
-            既にアカウントをお持ちの方は{' '}
-            <Link href="/login" className="text-[var(--accent-secondary)] hover:underline">
-              ログイン
-            </Link>
-          </p>
         </div>
 
-        <div className="mt-6 text-center">
-          <p className="text-xs text-[var(--text-muted)]">
-            登録することで
-            <Link href="/terms" className="text-[var(--accent-secondary)] hover:underline mx-1">利用規約</Link>
-            に同意したものとみなされます
-          </p>
-        </div>
+        <p className="text-center text-sm text-[var(--text-muted)] mt-6">
+          既にアカウントをお持ちの方は{' '}
+          <Link href="/login" className="text-[var(--accent-secondary)] hover:underline font-medium">
+            ログイン
+          </Link>
+        </p>
+
+        <p className="text-center text-[11px] text-[var(--text-muted)] mt-4">
+          登録することで
+          <Link href="/terms" className="hover:underline mx-0.5">利用規約</Link>
+          に同意したものとみなされます
+        </p>
       </div>
     </div>
   )
