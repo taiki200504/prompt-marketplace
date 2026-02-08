@@ -251,7 +251,8 @@ select.input {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
-.card:hover {
+/* card-link: hover effect only for clickable cards */
+.card-link:hover {
   border-color: var(--border-accent);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 40px rgba(212, 175, 55, 0.08);
   transform: translateY(-2px);
@@ -331,19 +332,6 @@ select.input {
 .star-filled {
   color: var(--gold);
   text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
-}
-
-/* Skeleton Loading */
-.skeleton {
-  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-elevated) 50%, var(--bg-tertiary) 75%);
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s infinite;
-  border-radius: 8px;
-}
-
-@keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
 }
 
 /* Toast */
@@ -442,18 +430,11 @@ select.input {
   margin: 2rem 0;
 }
 
-/* Focus ring */
-/* アクセシビリティ: フォーカス表示の改善 */
+/* Focus ring - アクセシビリティ */
 *:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
   border-radius: 4px;
-}
-
-button:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 2px;
 }
 
 .focus-ring:focus {
@@ -507,7 +488,7 @@ a:focus-visible {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   opacity: 0.015;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 1;
 }
 
 /* Premium stat card */
@@ -688,13 +669,9 @@ a:not(.btn):not(.badge):hover {
   box-shadow: 0 1px 4px rgba(212, 175, 55, 0.25);
 }
 
-/* Better Form Input States */
-.input:invalid {
+/* Form Input States - only show after user interaction */
+.input:user-invalid {
   border-color: var(--danger);
-}
-
-.input:valid {
-  border-color: var(--success);
 }
 
 /* Improved Badge Styles */
