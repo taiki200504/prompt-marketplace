@@ -1,7 +1,7 @@
 // PromptMarket Service Worker
-const CACHE_NAME = 'promptmarket-v1'
-const STATIC_CACHE_NAME = 'promptmarket-static-v1'
-const DYNAMIC_CACHE_NAME = 'promptmarket-dynamic-v1'
+const CACHE_NAME = 'promptmarket-v2'
+const STATIC_CACHE_NAME = 'promptmarket-static-v2'
+const DYNAMIC_CACHE_NAME = 'promptmarket-dynamic-v2'
 
 // Static assets to cache
 const STATIC_ASSETS = [
@@ -70,11 +70,14 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Static assets - Cache first, fallback to network
-  if (
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/) ||
-    url.pathname.startsWith('/_next/static/')
-  ) {
+  // Next.js hashed build assets - Network first to avoid stale cache after deploy
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(networkFirst(request))
+    return
+  }
+
+  // Other static assets (images, icons) - Cache first
+  if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|woff|woff2)$/)) {
     event.respondWith(cacheFirst(request))
     return
   }
@@ -237,12 +240,12 @@ async function syncResultLogs() {
 }
 
 // Queue helpers using IndexedDB
-async function getQueue(storeName) {
+async function getQueue(_storeName) {
   // Simplified - in production, use IndexedDB
   return []
 }
 
-async function removeFromQueue(storeName, id) {
+async function removeFromQueue(_storeName, _id) {
   // Simplified - in production, use IndexedDB
 }
 

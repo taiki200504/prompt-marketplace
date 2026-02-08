@@ -36,8 +36,6 @@ export const viewport: Viewport = {
   themeColor: "#C9A227",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
 };
 
@@ -59,81 +57,44 @@ export default function RootLayout({
           <main className="min-h-screen">{children}</main>
           <PWAInstall />
           <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
-            <div className="container py-16">
-              <div className="grid md:grid-cols-4 gap-12 mb-12">
-                {/* Brand */}
-                <div className="md:col-span-2">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xl font-semibold tracking-tight">
-                      <span className="text-gradient">Prompt</span>
-                      <span className="text-[var(--text-primary)]">Market</span>
-                    </span>
-                  </div>
-                  <p className="text-sm text-[var(--text-muted)] max-w-sm leading-relaxed">
-                    プロフェッショナルのためのAIプロンプトマーケットプレイス。
-                    高品質なプロンプトを発見し、共有し、収益化。
+            <div className="container py-12 sm:py-14">
+              <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 mb-10">
+                <div className="sm:col-span-2">
+                  <span className="text-lg font-semibold tracking-tight">
+                    <span className="text-gradient">Prompt</span>
+                    <span className="text-[var(--text-primary)]">Market</span>
+                  </span>
+                  <p className="text-sm text-[var(--text-muted)] max-w-xs leading-relaxed mt-3">
+                    高品質なAIプロンプトを発見・共有・収益化できるマーケットプレイス。
                   </p>
                 </div>
 
-                {/* Links */}
                 <div>
-                  <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider">
-                    探索
-                  </h4>
-                  <ul className="space-y-3">
-                    <li>
-                      <Link href="/prompts" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
-                        すべてのプロンプト
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/prompts?sort=trending" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
-                        トレンド
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/prompts?free=true" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
-                        無料プロンプト
-                      </Link>
-                    </li>
+                  <h4 className="text-xs font-semibold text-[var(--text-secondary)] mb-3 uppercase tracking-wider">探索</h4>
+                  <ul className="space-y-2">
+                    <li><Link href="/prompts" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">すべてのプロンプト</Link></li>
+                    <li><Link href="/prompts?sort=trending" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">トレンド</Link></li>
+                    <li><Link href="/prompts?free=true" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">無料プロンプト</Link></li>
                   </ul>
                 </div>
 
-                {/* Support */}
                 <div>
-                  <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider">
-                    サポート
-                  </h4>
-                  <ul className="space-y-3">
-                    <li>
-                      <a href="/create" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
-                        プロンプトを投稿
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
-                        ヘルプセンター
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#" className="text-sm text-[var(--text-muted)] hover:text-[var(--gold)] transition-colors">
-                        利用規約
-                      </a>
-                    </li>
+                  <h4 className="text-xs font-semibold text-[var(--text-secondary)] mb-3 uppercase tracking-wider">クリエイター</h4>
+                  <ul className="space-y-2">
+                    <li><Link href="/create" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">プロンプトを投稿</Link></li>
+                    <li><Link href="/signup" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">アカウント作成</Link></li>
+                    <li><Link href="/login" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">ログイン</Link></li>
                   </ul>
                 </div>
               </div>
 
-              {/* Bottom */}
-              <div className="pt-8 border-t border-[var(--border-subtle)] flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="pt-6 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-3">
                 <p className="text-xs text-[var(--text-muted)]">
-                  © 2026 PromptMarket. All rights reserved.
+                  &copy; 2026 PromptMarket
                 </p>
-                <div className="flex items-center gap-6">
-                  <span className="text-xs text-[var(--text-muted)]">
-                    Made with precision in Japan 🇯🇵
-                  </span>
-                </div>
+                <p className="text-xs text-[var(--text-muted)]">
+                  Made in Japan
+                </p>
               </div>
             </div>
           </footer>

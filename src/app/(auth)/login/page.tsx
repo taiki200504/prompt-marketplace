@@ -12,7 +12,7 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const { showToast } = useToast()
   const callbackUrl = searchParams.get('callbackUrl') || '/'
-  
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -43,18 +43,35 @@ function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-sm">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold mb-2">ログイン</h1>
+        <Link href="/" className="inline-block mb-6">
+          <span className="text-xl font-semibold tracking-tight">
+            <span className="text-gradient">Prompt</span>
+            <span className="text-[var(--text-primary)]">Market</span>
+          </span>
+        </Link>
+        <h1 className="text-xl font-bold mb-1.5">おかえりなさい</h1>
         <p className="text-sm text-[var(--text-muted)]">
           アカウントにログインして続ける
         </p>
       </div>
 
       <div className="card">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <SocialLoginButtons callbackUrl={callbackUrl} />
+
+        <div className="relative my-5">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-[var(--border-subtle)]" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-[var(--bg-secondary)] px-3 text-[var(--text-muted)]">または</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label className="block text-sm font-medium mb-2">メールアドレス</label>
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">メールアドレス</label>
             <input
               type="email"
               value={email}
@@ -66,7 +83,7 @@ function LoginForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">パスワード</label>
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">パスワード</label>
             <input
               type="password"
               value={password}
@@ -85,34 +102,14 @@ function LoginForm() {
             {loading ? 'ログイン中...' : 'ログイン'}
           </button>
         </form>
-
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[var(--border-subtle)]" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-[var(--bg-secondary)] px-4 text-[var(--text-muted)]">または</span>
-          </div>
-        </div>
-
-        <SocialLoginButtons callbackUrl={callbackUrl} />
-
-        <div className="divider" />
-
-        <p className="text-center text-sm text-[var(--text-muted)]">
-          アカウントをお持ちでない方は{' '}
-          <Link href="/signup" className="text-[var(--accent-secondary)] hover:underline">
-            新規登録
-          </Link>
-        </p>
       </div>
 
-      <div className="mt-6 p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-subtle)]">
-        <p className="text-xs text-[var(--text-muted)] text-center mb-2">デモアカウント</p>
-        <div className="text-xs text-center space-y-1">
-          <p><code className="text-[var(--text-secondary)]">demo@example.com</code> / <code>password123</code></p>
-        </div>
-      </div>
+      <p className="text-center text-sm text-[var(--text-muted)] mt-6">
+        アカウントをお持ちでない方は{' '}
+        <Link href="/signup" className="text-[var(--accent-secondary)] hover:underline font-medium">
+          新規登録
+        </Link>
+      </p>
     </div>
   )
 }
@@ -121,14 +118,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
       <Suspense fallback={
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm">
           <div className="animate-pulse">
-            <div className="h-8 bg-[var(--bg-tertiary)] rounded mb-8 mx-auto w-32" />
+            <div className="h-6 bg-[var(--bg-tertiary)] rounded mb-8 mx-auto w-32" />
             <div className="card p-6">
-              <div className="space-y-4">
-                <div className="h-12 bg-[var(--bg-tertiary)] rounded" />
-                <div className="h-12 bg-[var(--bg-tertiary)] rounded" />
-                <div className="h-12 bg-[var(--bg-tertiary)] rounded" />
+              <div className="space-y-3.5">
+                <div className="h-10 bg-[var(--bg-tertiary)] rounded" />
+                <div className="h-10 bg-[var(--bg-tertiary)] rounded" />
+                <div className="h-10 bg-[var(--bg-tertiary)] rounded" />
               </div>
             </div>
           </div>
