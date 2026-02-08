@@ -64,9 +64,11 @@ export async function POST(request: Request) {
     )
   } catch (error) {
     console.error('Signup error:', error)
+    const isDatabaseError = error instanceof Error &&
+      (error.message.includes('prisma') || error.message.includes('database') || error.message.includes('connect'))
     return NextResponse.json(
-      { error: '登録に失敗しました' },
-      { status: 500 }
+      { error: isDatabaseError ? 'データベース接続エラーが発生しました。しばらく経ってからお試しください。' : '登録に失敗しました' },
+      { status: isDatabaseError ? 503 : 500 }
     )
   }
 }
