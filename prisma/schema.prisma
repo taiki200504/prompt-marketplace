@@ -8,8 +8,9 @@ generator client {
 // PostgreSQL対応: Vercel本番環境ではPostgreSQLを使用
 // 開発環境でもPostgreSQLを使用する場合は、DATABASE_URLにPostgreSQLの接続URLを設定
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // =============================================================================

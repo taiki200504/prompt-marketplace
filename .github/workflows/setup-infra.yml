@@ -54,24 +54,30 @@ jobs:
             exit 1
           fi
 
-          DATABASE_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
+          # Pooler URL (port 6543) for runtime (Vercel/Next.js)
+          DATABASE_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+          # Direct URL (port 5432) for migrations/schema push
+          DIRECT_URL="postgresql://postgres:PromptMkt2026Secure@db.${PROJECT_REF}.supabase.co:5432/postgres"
           echo "DATABASE_URL=${DATABASE_URL}" >> "$GITHUB_OUTPUT"
+          echo "DIRECT_URL=${DIRECT_URL}" >> "$GITHUB_OUTPUT"
           echo "PROJECT_REF=${PROJECT_REF}" >> "$GITHUB_OUTPUT"
-          echo "Database URL constructed successfully"
+          echo "Database URLs constructed successfully"
 
       - name: Save secrets
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           echo "${{ steps.supabase.outputs.DATABASE_URL }}" | gh secret set DATABASE_URL --repo ${{ github.repository }}
+          echo "${{ steps.supabase.outputs.DIRECT_URL }}" | gh secret set DIRECT_URL --repo ${{ github.repository }}
           echo "${{ steps.supabase.outputs.PROJECT_REF }}" | gh secret set SUPABASE_PROJECT_REF --repo ${{ github.repository }}
           echo "Secrets saved!"
 
       - name: Push Prisma schema
         env:
-          DATABASE_URL: ${{ steps.supabase.outputs.DATABASE_URL }}
+          DATABASE_URL: ${{ steps.supabase.outputs.DIRECT_URL }}
         run: |
           npm ci
+          npx prisma generate
           npx prisma db push --accept-data-loss
           echo "Schema pushed successfully!"
 
@@ -95,7 +101,8 @@ jobs:
 
           NEXTAUTH_SECRET=$(openssl rand -base64 32)
 
-          for KEY_VAL in "DATABASE_URL:${DATABASE_URL}" "NEXTAUTH_SECRET:${NEXTAUTH_SECRET}"; do
+          DIRECT_URL="${{ steps.supabase.outputs.DIRECT_URL }}"
+          for KEY_VAL in "DATABASE_URL:${DATABASE_URL}" "DIRECT_URL:${DIRECT_URL}" "NEXTAUTH_SECRET:${NEXTAUTH_SECRET}"; do
             KEY=$(echo "$KEY_VAL" | cut -d: -f1)
             VAL=$(echo "$KEY_VAL" | cut -d: -f2-)
             for TARGET in production preview development; do
