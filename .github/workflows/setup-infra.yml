@@ -57,6 +57,31 @@ jobs:
           echo "DIRECT_URL=${DIRECT_URL}" >> "$GITHUB_OUTPUT"
           echo "PROJECT_REF=${PROJECT_REF}" >> "$GITHUB_OUTPUT"
 
+      - name: Wait for DB ready
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
+          echo "Checking project $PROJECT_REF status..."
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
+              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | jq -r '.status')
+            echo "Attempt $i: status=$STATUS"
+            if [ "$STATUS" = "ACTIVE_HEALTHY" ]; then
+              echo "Project is ready!"
+              break
+            fi
+            echo "Waiting 30s..."
+            sleep 30
+          done
+          # Final check
+          STATUS=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | jq -r '.status')
+          echo "Final status: $STATUS"
+          if [ "$STATUS" != "ACTIVE_HEALTHY" ]; then
+            echo "WARNING: Project not fully ready (status: $STATUS), proceeding anyway..."
+          fi
+
       - name: Save secrets
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -88,19 +113,41 @@ jobs:
           npx prisma generate
           if [ $? -ne 0 ]; then echo "prisma generate FAILED"; fi
 
-          echo "=== Step 3: prisma db push ==="
-          npx prisma db push --accept-data-loss
-          EXIT1=$?
-          echo "Exit code: $EXIT1"
+          PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
 
-          if [ "$EXIT1" -ne 0 ]; then
-            echo "=== Trying direct host connection ==="
-            PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
-            export DATABASE_URL="postgresql://postgres:PromptMkt2026Secure@db.${PROJECT_REF}.supabase.co:5432/postgres"
-            export DIRECT_URL="$DATABASE_URL"
-            npx prisma db push --accept-data-loss
-            EXIT2=$?
-            echo "Exit code: $EXIT2"
+          # Try multiple connection methods with retries
+          URLS=(
+            "postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
+            "postgresql://postgres:PromptMkt2026Secure@db.${PROJECT_REF}.supabase.co:5432/postgres"
+            "postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
+          )
+          NAMES=("session-pooler" "direct-host" "transaction-pooler")
+
+          SUCCESS=0
+          for idx in 0 1 2; do
+            URL="${URLS[$idx]}"
+            NAME="${NAMES[$idx]}"
+            echo "=== Trying $NAME ==="
+            export DATABASE_URL="$URL"
+            export DIRECT_URL="$URL"
+            for attempt in 1 2 3; do
+              echo "--- $NAME attempt $attempt ---"
+              npx prisma db push --accept-data-loss
+              if [ $? -eq 0 ]; then
+                echo "SUCCESS with $NAME!"
+                SUCCESS=1
+                break 2
+              fi
+              sleep 15
+            done
+          done
+
+          EXIT1=$SUCCESS
+          if [ "$SUCCESS" -eq 0 ]; then
+            EXIT1=1
+            echo "All connection methods failed"
+          else
+            EXIT1=0
           fi
 
           echo "=== Writing summary ==="
@@ -109,12 +156,7 @@ jobs:
           cat "$LOG" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-          # Exit with appropriate code
-          if [ "${EXIT1:-1}" -eq 0 ] || [ "${EXIT2:-1}" -eq 0 ]; then
-            exit 0
-          else
-            exit 1
-          fi
+          exit $EXIT1
 
       - name: Post debug log as issue
         if: always()
