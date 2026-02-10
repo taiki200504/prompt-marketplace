@@ -19,110 +19,76 @@ jobs:
           sudo mv supabase /usr/local/bin/
           supabase --version
 
-      - name: Create Supabase project
+      - name: Get or create Supabase project
         id: supabase
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set -e
           ORG_ID=$(supabase orgs list --output json | jq -r '.[0].id')
-          echo "Org ID: $ORG_ID"
-
-          # Delete existing broken project
-          OLD_REF=$(supabase projects list --output json | jq -r '.[] | select(.name == "prompt-marketplace") | .id')
-          if [ -n "$OLD_REF" ] && [ "$OLD_REF" != "null" ]; then
-            echo "Deleting broken project $OLD_REF..."
-            supabase projects delete "$OLD_REF" --experimental || true
-            echo "Waiting 30s after deletion..."
-            sleep 30
-          fi
-
-          # Create fresh project
-          echo "Creating new project..."
-          supabase projects create prompt-marketplace \
-            --db-password "PromptMkt2026Secure" \
-            --region ap-northeast-1 \
-            --org-id "$ORG_ID"
-
-          echo "Waiting 180s for project to fully initialize..."
-          sleep 180
 
           PROJECT_REF=$(supabase projects list --output json | jq -r '.[] | select(.name == "prompt-marketplace") | .id')
-          echo "New project ref: $PROJECT_REF"
 
           if [ -z "$PROJECT_REF" ] || [ "$PROJECT_REF" = "null" ]; then
-            echo "ERROR: Could not find project ref"
-            exit 1
+            echo "Creating new project..."
+            supabase projects create prompt-marketplace \
+              --db-password "PromptMkt2026Secure" \
+              --region ap-northeast-1 \
+              --org-id "$ORG_ID"
+            sleep 180
+            PROJECT_REF=$(supabase projects list --output json | jq -r '.[] | select(.name == "prompt-marketplace") | .id')
+          else
+            echo "Project exists: $PROJECT_REF"
           fi
 
-          # Pooler URL (port 6543) for runtime (Vercel/Next.js serverless)
+          echo "PROJECT_REF=${PROJECT_REF}" >> "$GITHUB_OUTPUT"
+
+          # Get full connection details from API and post to issue for debugging
+          echo "=== Project details ==="
+          PROJECT_JSON=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}")
+          echo "$PROJECT_JSON" | jq '.'
+
+          echo "=== Pooler settings ==="
+          POOLER_JSON=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}/config/database/pooler" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}")
+          echo "$POOLER_JSON" | jq '.'
+
+          echo "=== API keys ==="
+          KEYS_JSON=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}/api-keys" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}")
+          echo "Key count: $(echo "$KEYS_JSON" | jq 'length')"
+
+          # Post diagnostic to issue
+          DIAG="Project: $PROJECT_REF\n\nProject JSON:\n\`\`\`\n$(echo "$PROJECT_JSON" | jq '.')\n\`\`\`\n\nPooler JSON:\n\`\`\`\n$(echo "$POOLER_JSON" | jq '.')\n\`\`\`"
+          gh issue comment 19 --repo ${{ github.repository }} --body "$(echo -e "$DIAG")" || true
+
+          # Construct URLs
           DATABASE_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-          # Session pooler (port 5432) for migrations
           DIRECT_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
           echo "DATABASE_URL=${DATABASE_URL}" >> "$GITHUB_OUTPUT"
           echo "DIRECT_URL=${DIRECT_URL}" >> "$GITHUB_OUTPUT"
-          echo "PROJECT_REF=${PROJECT_REF}" >> "$GITHUB_OUTPUT"
 
-      - name: Ensure DB is active
-        id: dbcheck
+      - name: Reset DB password
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
-          LOG=/tmp/db-check.log
 
-          echo "=== Full project details ===" | tee -a $LOG
-          curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
-            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | tee -a $LOG
-          echo "" | tee -a $LOG
-
-          STATUS=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
-            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | jq -r '.status')
-          echo "Status: $STATUS" | tee -a $LOG
-
-          # Get database settings
-          echo "=== Database settings ===" | tee -a $LOG
-          curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}/config/database/postgres" \
-            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | tee -a $LOG
-          echo "" | tee -a $LOG
-
-          # If not active, restore
-          if [ "$STATUS" != "ACTIVE_HEALTHY" ]; then
-            echo "Restoring project..." | tee -a $LOG
-            curl -s -X POST "https://api.supabase.com/v1/projects/${PROJECT_REF}/restore" \
-              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
-              -H "Content-Type: application/json" | tee -a $LOG
-            echo "" | tee -a $LOG
-
-            for i in $(seq 1 20); do
-              STATUS=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
-                -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | jq -r '.status')
-              echo "Attempt $i: $STATUS" | tee -a $LOG
-              [ "$STATUS" = "ACTIVE_HEALTHY" ] && break
-              sleep 30
-            done
-          fi
-
-          echo "Waiting 30s for pooler sync..." | tee -a $LOG
-          sleep 30
-
-          # Post diagnostic info as issue comment
-          gh issue comment 19 --repo ${{ github.repository }} --body "$(cat $LOG)" || true
-
-      - name: Reset DB password
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: |
-          PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
-          echo "Resetting database password..."
-          RESULT=$(curl -s -X POST "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/password" \
+          # Reset password
+          RESULT=$(curl -s -X PUT "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/password" \
             -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
             -H "Content-Type: application/json" \
             -d '{"password": "PromptMkt2026Secure"}')
-          echo "Result: $RESULT"
-          echo "Waiting 15s for password change to propagate..."
-          sleep 15
+          echo "Password reset result: $RESULT"
+
+          # Post result
+          gh issue comment 19 --repo ${{ github.repository }} --body "Password reset: $RESULT" || true
+
+          echo "Waiting 30s for password propagation..."
+          sleep 30
 
       - name: Save secrets
         env:
@@ -143,21 +109,11 @@ jobs:
           LOG=/tmp/prisma-debug.log
           exec > >(tee -a "$LOG") 2>&1
 
-          echo "=== ENV CHECK ==="
-          echo "DATABASE_URL set: $([ -n "$DATABASE_URL" ] && echo 'yes' || echo 'NO')"
-          echo "DIRECT_URL set: $([ -n "$DIRECT_URL" ] && echo 'yes' || echo 'NO')"
-
-          echo "=== Step 1: npm ci ==="
           npm ci
-          if [ $? -ne 0 ]; then echo "npm ci FAILED"; fi
-
-          echo "=== Step 2: prisma generate ==="
           npx prisma generate
-          if [ $? -ne 0 ]; then echo "prisma generate FAILED"; fi
 
           PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
 
-          # Try multiple connection methods with retries
           URLS=(
             "postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
             "postgresql://postgres:PromptMkt2026Secure@db.${PROJECT_REF}.supabase.co:5432/postgres"
@@ -167,52 +123,32 @@ jobs:
 
           SUCCESS=0
           for idx in 0 1 2; do
-            URL="${URLS[$idx]}"
-            NAME="${NAMES[$idx]}"
-            echo "=== Trying $NAME ==="
-            export DATABASE_URL="$URL"
-            export DIRECT_URL="$URL"
+            echo "=== Trying ${NAMES[$idx]} ==="
+            export DATABASE_URL="${URLS[$idx]}"
+            export DIRECT_URL="${URLS[$idx]}"
             for attempt in 1 2 3; do
-              echo "--- $NAME attempt $attempt ---"
-              npx prisma db push --accept-data-loss
-              if [ $? -eq 0 ]; then
-                echo "SUCCESS with $NAME!"
-                SUCCESS=1
-                break 2
-              fi
+              echo "--- attempt $attempt ---"
+              npx prisma db push --accept-data-loss && { SUCCESS=1; break 2; }
               sleep 15
             done
           done
 
-          EXIT1=$SUCCESS
-          if [ "$SUCCESS" -eq 0 ]; then
-            EXIT1=1
-            echo "All connection methods failed"
-          else
-            EXIT1=0
-          fi
-
-          echo "=== Writing summary ==="
           echo '## Prisma Push Log' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat "$LOG" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-          exit $EXIT1
+          [ "$SUCCESS" -eq 1 ] && exit 0 || exit 1
 
       - name: Post debug log as issue
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          if [ -f /tmp/prisma-debug.log ]; then
-            LOG_CONTENT=$(head -200 /tmp/prisma-debug.log)
+          [ -f /tmp/prisma-debug.log ] && \
             gh issue create --repo ${{ github.repository }} \
               --title "setup-infra debug $(date -u +%H:%M)" \
-              --body "$LOG_CONTENT" || echo "Could not create issue"
-          else
-            echo "No debug log found"
-          fi
+              --body "$(head -200 /tmp/prisma-debug.log)" || true
 
       - name: Set Vercel environment variables
         env:
@@ -224,10 +160,7 @@ jobs:
           PROJECT_ID=$(echo "$PROJECTS" | jq -r '.projects[] | select(.name | contains("prompt-marketplace")) | .id' | head -1)
 
           if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then
-            echo "Could not find Vercel project. Skipping."
-            echo "## Vercel" >> $GITHUB_STEP_SUMMARY
-            echo "Project not found. Available:" >> $GITHUB_STEP_SUMMARY
-            echo "$PROJECTS" | jq '.projects[].name' >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+            echo "Vercel project not found. Skipping."
             exit 0
           fi
 
