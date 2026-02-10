@@ -28,21 +28,27 @@ jobs:
           ORG_ID=$(supabase orgs list --output json | jq -r '.[0].id')
           echo "Org ID: $ORG_ID"
 
-          # Check if project already exists
-          PROJECT_REF=$(supabase projects list --output json | jq -r '.[] | select(.name == "prompt-marketplace") | .id')
-
-          if [ -z "$PROJECT_REF" ] || [ "$PROJECT_REF" = "null" ]; then
-            echo "Creating new project..."
-            supabase projects create prompt-marketplace \
-              --db-password "PromptMkt2026Secure" \
-              --region ap-northeast-1 \
-              --org-id "$ORG_ID"
-            echo "Waiting 120s for project to initialize..."
-            sleep 120
-            PROJECT_REF=$(supabase projects list --output json | jq -r '.[] | select(.name == "prompt-marketplace") | .id')
-          else
-            echo "Project already exists: $PROJECT_REF"
+          # Delete existing broken project
+          OLD_REF=$(supabase projects list --output json | jq -r '.[] | select(.name == "prompt-marketplace") | .id')
+          if [ -n "$OLD_REF" ] && [ "$OLD_REF" != "null" ]; then
+            echo "Deleting broken project $OLD_REF..."
+            supabase projects delete "$OLD_REF" --experimental || true
+            echo "Waiting 30s after deletion..."
+            sleep 30
           fi
+
+          # Create fresh project
+          echo "Creating new project..."
+          supabase projects create prompt-marketplace \
+            --db-password "PromptMkt2026Secure" \
+            --region ap-northeast-1 \
+            --org-id "$ORG_ID"
+
+          echo "Waiting 180s for project to fully initialize..."
+          sleep 180
+
+          PROJECT_REF=$(supabase projects list --output json | jq -r '.[] | select(.name == "prompt-marketplace") | .id')
+          echo "New project ref: $PROJECT_REF"
 
           if [ -z "$PROJECT_REF" ] || [ "$PROJECT_REF" = "null" ]; then
             echo "ERROR: Could not find project ref"
@@ -51,7 +57,7 @@ jobs:
 
           # Pooler URL (port 6543) for runtime (Vercel/Next.js serverless)
           DATABASE_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-          # Direct URL (port 5432) for migrations/schema push
+          # Session pooler (port 5432) for migrations
           DIRECT_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
           echo "DATABASE_URL=${DATABASE_URL}" >> "$GITHUB_OUTPUT"
           echo "DIRECT_URL=${DIRECT_URL}" >> "$GITHUB_OUTPUT"
