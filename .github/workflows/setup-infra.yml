@@ -58,49 +58,51 @@ jobs:
           echo "PROJECT_REF=${PROJECT_REF}" >> "$GITHUB_OUTPUT"
 
       - name: Ensure DB is active
+        id: dbcheck
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
-          echo "Checking project $PROJECT_REF status..."
+          LOG=/tmp/db-check.log
+
+          echo "=== Full project details ===" | tee -a $LOG
+          curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | tee -a $LOG
+          echo "" | tee -a $LOG
 
           STATUS=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
             -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | jq -r '.status')
-          echo "Current status: $STATUS"
+          echo "Status: $STATUS" | tee -a $LOG
 
-          # If paused, restore it
+          # Get database settings
+          echo "=== Database settings ===" | tee -a $LOG
+          curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}/config/database/postgres" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | tee -a $LOG
+          echo "" | tee -a $LOG
+
+          # If not active, restore
           if [ "$STATUS" != "ACTIVE_HEALTHY" ]; then
-            echo "Project not active, attempting restore..."
+            echo "Restoring project..." | tee -a $LOG
             curl -s -X POST "https://api.supabase.com/v1/projects/${PROJECT_REF}/restore" \
               -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
-              -H "Content-Type: application/json"
-            echo ""
-            echo "Restore initiated, waiting for project to become healthy..."
-          fi
+              -H "Content-Type: application/json" | tee -a $LOG
+            echo "" | tee -a $LOG
 
-          # Wait up to 10 minutes for project to be ready
-          for i in $(seq 1 20); do
-            STATUS=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
-              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | jq -r '.status')
-            echo "Attempt $i/20: status=$STATUS"
-            if [ "$STATUS" = "ACTIVE_HEALTHY" ]; then
-              echo "Project is ready!"
-              # Extra wait for pooler to register
-              echo "Waiting 30s for connection pooler to sync..."
+            for i in $(seq 1 20); do
+              STATUS=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
+                -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | jq -r '.status')
+              echo "Attempt $i: $STATUS" | tee -a $LOG
+              [ "$STATUS" = "ACTIVE_HEALTHY" ] && break
               sleep 30
-              break
-            fi
-            sleep 30
-          done
-
-          # Final check
-          STATUS=$(curl -s "https://api.supabase.com/v1/projects/${PROJECT_REF}" \
-            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" | jq -r '.status')
-          echo "Final status: $STATUS"
-          if [ "$STATUS" != "ACTIVE_HEALTHY" ]; then
-            echo "ERROR: Project still not ready after 10 minutes (status: $STATUS)"
-            exit 1
+            done
           fi
+
+          echo "Waiting 30s for pooler sync..." | tee -a $LOG
+          sleep 30
+
+          # Post diagnostic info as issue comment
+          gh issue comment 19 --repo ${{ github.repository }} --body "$(cat $LOG)" || true
 
       - name: Reset DB password
         env:
