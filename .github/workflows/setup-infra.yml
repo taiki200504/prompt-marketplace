@@ -25,43 +25,37 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -e
-          echo "=== Listing organizations ==="
-          supabase orgs list
-
           ORG_ID=$(supabase orgs list --output json | jq -r '.[0].id')
           echo "Org ID: $ORG_ID"
 
-          echo "=== Listing existing projects ==="
-          supabase projects list
-
-          echo "=== Creating new project ==="
-          supabase projects create prompt-marketplace \
-            --db-password "PromptMkt2026Secure" \
-            --region ap-northeast-1 \
-            --org-id "$ORG_ID" || echo "Project creation returned non-zero (may already exist)"
-
-          echo "=== Waiting for project to initialize ==="
-          sleep 90
-
-          echo "=== Getting project ref ==="
-          supabase projects list
+          # Check if project already exists
           PROJECT_REF=$(supabase projects list --output json | jq -r '.[] | select(.name == "prompt-marketplace") | .id')
-          echo "Project ref: $PROJECT_REF"
+
+          if [ -z "$PROJECT_REF" ] || [ "$PROJECT_REF" = "null" ]; then
+            echo "Creating new project..."
+            supabase projects create prompt-marketplace \
+              --db-password "PromptMkt2026Secure" \
+              --region ap-northeast-1 \
+              --org-id "$ORG_ID"
+            echo "Waiting 120s for project to initialize..."
+            sleep 120
+            PROJECT_REF=$(supabase projects list --output json | jq -r '.[] | select(.name == "prompt-marketplace") | .id')
+          else
+            echo "Project already exists: $PROJECT_REF"
+          fi
 
           if [ -z "$PROJECT_REF" ] || [ "$PROJECT_REF" = "null" ]; then
             echo "ERROR: Could not find project ref"
-            supabase projects list --output json
             exit 1
           fi
 
-          # Pooler URL (port 6543) for runtime (Vercel/Next.js)
+          # Pooler URL (port 6543) for runtime (Vercel/Next.js serverless)
           DATABASE_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
           # Direct URL (port 5432) for migrations/schema push
-          DIRECT_URL="postgresql://postgres:PromptMkt2026Secure@db.${PROJECT_REF}.supabase.co:5432/postgres"
+          DIRECT_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
           echo "DATABASE_URL=${DATABASE_URL}" >> "$GITHUB_OUTPUT"
           echo "DIRECT_URL=${DIRECT_URL}" >> "$GITHUB_OUTPUT"
           echo "PROJECT_REF=${PROJECT_REF}" >> "$GITHUB_OUTPUT"
-          echo "Database URLs constructed successfully"
 
       - name: Save secrets
         env:
@@ -70,39 +64,50 @@ jobs:
           echo "${{ steps.supabase.outputs.DATABASE_URL }}" | gh secret set DATABASE_URL --repo ${{ github.repository }}
           echo "${{ steps.supabase.outputs.DIRECT_URL }}" | gh secret set DIRECT_URL --repo ${{ github.repository }}
           echo "${{ steps.supabase.outputs.PROJECT_REF }}" | gh secret set SUPABASE_PROJECT_REF --repo ${{ github.repository }}
-          echo "Secrets saved!"
 
       - name: Push Prisma schema
+        id: prisma
         env:
           DATABASE_URL: ${{ steps.supabase.outputs.DIRECT_URL }}
           DIRECT_URL: ${{ steps.supabase.outputs.DIRECT_URL }}
         run: |
-          echo "=== Installing dependencies ==="
           npm ci
-          echo "=== Generating Prisma client ==="
           npx prisma generate
-          echo "=== Testing DB connection ==="
-          echo "DB host: $(echo $DATABASE_URL | sed 's|.*@||;s|:.*||')"
-          echo "=== Pushing schema (with retries) ==="
-          for attempt in 1 2 3 4 5; do
-            echo "--- Attempt $attempt ---"
-            npx prisma db push --accept-data-loss 2>&1 && { echo "Schema pushed successfully!"; exit 0; }
-            echo "Failed attempt $attempt, waiting 30s..."
-            sleep 30
-          done
-          echo "=== All attempts failed ==="
-          echo "=== Trying with session pooler (port 5432) ==="
-          PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
-          export DATABASE_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
-          export DIRECT_URL="$DATABASE_URL"
-          echo "Trying session pooler URL..."
-          npx prisma db push --accept-data-loss 2>&1 && { echo "Schema pushed via session pooler!"; exit 0; }
-          echo "=== Session pooler also failed, trying direct without project prefix ==="
-          export DATABASE_URL="postgresql://postgres:PromptMkt2026Secure@db.${PROJECT_REF}.supabase.co:5432/postgres"
-          export DIRECT_URL="$DATABASE_URL"
-          npx prisma db push --accept-data-loss 2>&1 && { echo "Schema pushed via direct!"; exit 0; }
-          echo "All connection methods failed"
-          exit 1
+
+          # Capture output for debugging
+          set +e
+          OUTPUT=$(npx prisma db push --accept-data-loss 2>&1)
+          EXIT_CODE=$?
+          echo "$OUTPUT"
+          set -e
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "## Prisma Push Failed" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "DB URL pattern: postgres.[REF]@pooler:5432" >> $GITHUB_STEP_SUMMARY
+
+            # Retry with direct connection to db host
+            echo "Retrying with direct db host..."
+            PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
+            export DATABASE_URL="postgresql://postgres:PromptMkt2026Secure@db.${PROJECT_REF}.supabase.co:5432/postgres"
+            export DIRECT_URL="$DATABASE_URL"
+
+            OUTPUT2=$(npx prisma db push --accept-data-loss 2>&1)
+            EXIT_CODE2=$?
+            echo "$OUTPUT2"
+
+            if [ $EXIT_CODE2 -ne 0 ]; then
+              echo "## Direct Connection Also Failed" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "$OUTPUT2" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          fi
+
+          echo "Schema pushed successfully!"
 
       - name: Set Vercel environment variables
         env:
@@ -114,17 +119,16 @@ jobs:
           PROJECT_ID=$(echo "$PROJECTS" | jq -r '.projects[] | select(.name | contains("prompt-marketplace")) | .id' | head -1)
 
           if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then
-            echo "Could not find Vercel project. Available:"
-            echo "$PROJECTS" | jq '.projects[].name' 2>/dev/null || echo "$PROJECTS"
-            echo "Skipping Vercel env setup"
+            echo "Could not find Vercel project. Skipping."
+            echo "## Vercel" >> $GITHUB_STEP_SUMMARY
+            echo "Project not found. Available:" >> $GITHUB_STEP_SUMMARY
+            echo "$PROJECTS" | jq '.projects[].name' >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
             exit 0
           fi
 
-          echo "Vercel Project ID: $PROJECT_ID"
-
           NEXTAUTH_SECRET=$(openssl rand -base64 32)
-
           DIRECT_URL="${{ steps.supabase.outputs.DIRECT_URL }}"
+
           for KEY_VAL in "DATABASE_URL:${DATABASE_URL}" "DIRECT_URL:${DIRECT_URL}" "NEXTAUTH_SECRET:${NEXTAUTH_SECRET}"; do
             KEY=$(echo "$KEY_VAL" | cut -d: -f1)
             VAL=$(echo "$KEY_VAL" | cut -d: -f2-)
@@ -149,4 +153,3 @@ jobs:
           echo "## Infrastructure Setup" >> $GITHUB_STEP_SUMMARY
           echo "- Project ref: ${{ steps.supabase.outputs.PROJECT_REF }}" >> $GITHUB_STEP_SUMMARY
           echo "- Region: ap-northeast-1" >> $GITHUB_STEP_SUMMARY
-          echo "- DB host: db.${{ steps.supabase.outputs.PROJECT_REF }}.supabase.co" >> $GITHUB_STEP_SUMMARY
