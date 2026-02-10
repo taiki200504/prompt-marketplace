@@ -64,11 +64,19 @@ jobs:
           DIAG="Project: $PROJECT_REF\n\nProject JSON:\n\`\`\`\n$(echo "$PROJECT_JSON" | jq '.')\n\`\`\`\n\nPooler JSON:\n\`\`\`\n$(echo "$POOLER_JSON" | jq '.')\n\`\`\`"
           gh issue comment 19 --repo ${{ github.repository }} --body "$(echo -e "$DIAG")" || true
 
-          # Construct URLs
-          DATABASE_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-          DIRECT_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
+          # Get actual pooler host from API (not hardcoded!)
+          POOLER_HOST=$(echo "$POOLER_JSON" | jq -r '.[0].db_host')
+          POOLER_PORT=$(echo "$POOLER_JSON" | jq -r '.[0].db_port')
+          echo "Pooler host: $POOLER_HOST:$POOLER_PORT"
+
+          # Construct URLs using actual pooler host
+          DATABASE_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@${POOLER_HOST}:${POOLER_PORT}/postgres"
+          # For migrations, use direct connection to DB host
+          DB_HOST=$(echo "$PROJECT_JSON" | jq -r '.database.host')
+          DIRECT_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@${DB_HOST}:5432/postgres"
           echo "DATABASE_URL=${DATABASE_URL}" >> "$GITHUB_OUTPUT"
           echo "DIRECT_URL=${DIRECT_URL}" >> "$GITHUB_OUTPUT"
+          echo "POOLER_HOST=${POOLER_HOST}" >> "$GITHUB_OUTPUT"
 
       - name: Reset DB password
         env:
@@ -77,8 +85,8 @@ jobs:
         run: |
           PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
 
-          # Reset password
-          RESULT=$(curl -s -X PUT "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/password" \
+          # Reset password (try PATCH)
+          RESULT=$(curl -s -X PATCH "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/password" \
             -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
             -H "Content-Type: application/json" \
             -d '{"password": "PromptMkt2026Secure"}')
@@ -114,12 +122,13 @@ jobs:
 
           PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
 
+          POOLER_HOST="${{ steps.supabase.outputs.POOLER_HOST }}"
           URLS=(
-            "postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
+            "postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@${POOLER_HOST}:5432/postgres"
+            "postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@${POOLER_HOST}:6543/postgres"
             "postgresql://postgres:PromptMkt2026Secure@db.${PROJECT_REF}.supabase.co:5432/postgres"
-            "postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
           )
-          NAMES=("session-pooler" "direct-host" "transaction-pooler")
+          NAMES=("session-pooler" "transaction-pooler" "direct-host")
 
           SUCCESS=0
           for idx in 0 1 2; do
