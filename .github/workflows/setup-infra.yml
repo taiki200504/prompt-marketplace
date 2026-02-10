@@ -102,6 +102,20 @@ jobs:
             exit 1
           fi
 
+      - name: Reset DB password
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
+          echo "Resetting database password..."
+          RESULT=$(curl -s -X POST "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/password" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{"password": "PromptMkt2026Secure"}')
+          echo "Result: $RESULT"
+          echo "Waiting 15s for password change to propagate..."
+          sleep 15
+
       - name: Save secrets
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
