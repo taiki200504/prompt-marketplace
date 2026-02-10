@@ -70,44 +70,59 @@ jobs:
         env:
           DATABASE_URL: ${{ steps.supabase.outputs.DIRECT_URL }}
           DIRECT_URL: ${{ steps.supabase.outputs.DIRECT_URL }}
+        shell: bash
         run: |
-          npm ci
-          npx prisma generate
-
-          # Capture output for debugging
           set +e
-          OUTPUT=$(npx prisma db push --accept-data-loss 2>&1)
-          EXIT_CODE=$?
-          echo "$OUTPUT"
-          set -e
+          LOG=/tmp/prisma-debug.log
+          exec > >(tee -a "$LOG") 2>&1
 
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "## Prisma Push Failed" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "$OUTPUT" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "DB URL pattern: postgres.[REF]@pooler:5432" >> $GITHUB_STEP_SUMMARY
+          echo "=== ENV CHECK ==="
+          echo "DATABASE_URL set: $([ -n "$DATABASE_URL" ] && echo 'yes' || echo 'NO')"
+          echo "DIRECT_URL set: $([ -n "$DIRECT_URL" ] && echo 'yes' || echo 'NO')"
 
-            # Retry with direct connection to db host
-            echo "Retrying with direct db host..."
+          echo "=== Step 1: npm ci ==="
+          npm ci
+          if [ $? -ne 0 ]; then echo "npm ci FAILED"; fi
+
+          echo "=== Step 2: prisma generate ==="
+          npx prisma generate
+          if [ $? -ne 0 ]; then echo "prisma generate FAILED"; fi
+
+          echo "=== Step 3: prisma db push ==="
+          npx prisma db push --accept-data-loss
+          EXIT1=$?
+          echo "Exit code: $EXIT1"
+
+          if [ "$EXIT1" -ne 0 ]; then
+            echo "=== Trying direct host connection ==="
             PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
             export DATABASE_URL="postgresql://postgres:PromptMkt2026Secure@db.${PROJECT_REF}.supabase.co:5432/postgres"
             export DIRECT_URL="$DATABASE_URL"
-
-            OUTPUT2=$(npx prisma db push --accept-data-loss 2>&1)
-            EXIT_CODE2=$?
-            echo "$OUTPUT2"
-
-            if [ $EXIT_CODE2 -ne 0 ]; then
-              echo "## Direct Connection Also Failed" >> $GITHUB_STEP_SUMMARY
-              echo '```' >> $GITHUB_STEP_SUMMARY
-              echo "$OUTPUT2" >> $GITHUB_STEP_SUMMARY
-              echo '```' >> $GITHUB_STEP_SUMMARY
-              exit 1
-            fi
+            npx prisma db push --accept-data-loss
+            EXIT2=$?
+            echo "Exit code: $EXIT2"
           fi
 
-          echo "Schema pushed successfully!"
+          echo "=== Writing summary ==="
+          echo '## Prisma Push Log' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat "$LOG" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          # Exit with appropriate code
+          if [ "${EXIT1:-1}" -eq 0 ] || [ "${EXIT2:-1}" -eq 0 ]; then
+            exit 0
+          else
+            exit 1
+          fi
+
+      - name: Upload debug log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prisma-debug-log
+          path: /tmp/prisma-debug.log
+          if-no-files-found: ignore
 
       - name: Set Vercel environment variables
         env:
