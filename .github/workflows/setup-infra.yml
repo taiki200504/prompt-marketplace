@@ -116,13 +116,19 @@ jobs:
             exit 1
           fi
 
-      - name: Upload debug log
+      - name: Post debug log as issue
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: prisma-debug-log
-          path: /tmp/prisma-debug.log
-          if-no-files-found: ignore
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          if [ -f /tmp/prisma-debug.log ]; then
+            LOG_CONTENT=$(head -200 /tmp/prisma-debug.log)
+            gh issue create --repo ${{ github.repository }} \
+              --title "setup-infra debug $(date -u +%H:%M)" \
+              --body "$LOG_CONTENT" || echo "Could not create issue"
+          else
+            echo "No debug log found"
+          fi
 
       - name: Set Vercel environment variables
         env:
