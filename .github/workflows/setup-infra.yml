@@ -41,7 +41,7 @@ jobs:
             --org-id "$ORG_ID" || echo "Project creation returned non-zero (may already exist)"
 
           echo "=== Waiting for project to initialize ==="
-          sleep 45
+          sleep 90
 
           echo "=== Getting project ref ==="
           supabase projects list
@@ -75,11 +75,22 @@ jobs:
       - name: Push Prisma schema
         env:
           DATABASE_URL: ${{ steps.supabase.outputs.DIRECT_URL }}
+          DIRECT_URL: ${{ steps.supabase.outputs.DIRECT_URL }}
         run: |
           npm ci
           npx prisma generate
-          npx prisma db push --accept-data-loss
-          echo "Schema pushed successfully!"
+          echo "=== Pushing schema (with retries) ==="
+          for attempt in 1 2 3 4; do
+            echo "Attempt $attempt..."
+            if npx prisma db push --accept-data-loss 2>&1; then
+              echo "Schema pushed successfully!"
+              exit 0
+            fi
+            echo "Failed, waiting 30s before retry..."
+            sleep 30
+          done
+          echo "All attempts failed"
+          exit 1
 
       - name: Set Vercel environment variables
         env:
