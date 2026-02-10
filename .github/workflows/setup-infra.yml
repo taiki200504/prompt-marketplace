@@ -77,19 +77,31 @@ jobs:
           DATABASE_URL: ${{ steps.supabase.outputs.DIRECT_URL }}
           DIRECT_URL: ${{ steps.supabase.outputs.DIRECT_URL }}
         run: |
+          echo "=== Installing dependencies ==="
           npm ci
+          echo "=== Generating Prisma client ==="
           npx prisma generate
+          echo "=== Testing DB connection ==="
+          echo "DB host: $(echo $DATABASE_URL | sed 's|.*@||;s|:.*||')"
           echo "=== Pushing schema (with retries) ==="
-          for attempt in 1 2 3 4; do
-            echo "Attempt $attempt..."
-            if npx prisma db push --accept-data-loss 2>&1; then
-              echo "Schema pushed successfully!"
-              exit 0
-            fi
-            echo "Failed, waiting 30s before retry..."
+          for attempt in 1 2 3 4 5; do
+            echo "--- Attempt $attempt ---"
+            npx prisma db push --accept-data-loss 2>&1 && { echo "Schema pushed successfully!"; exit 0; }
+            echo "Failed attempt $attempt, waiting 30s..."
             sleep 30
           done
-          echo "All attempts failed"
+          echo "=== All attempts failed ==="
+          echo "=== Trying with session pooler (port 5432) ==="
+          PROJECT_REF="${{ steps.supabase.outputs.PROJECT_REF }}"
+          export DATABASE_URL="postgresql://postgres.${PROJECT_REF}:PromptMkt2026Secure@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
+          export DIRECT_URL="$DATABASE_URL"
+          echo "Trying session pooler URL..."
+          npx prisma db push --accept-data-loss 2>&1 && { echo "Schema pushed via session pooler!"; exit 0; }
+          echo "=== Session pooler also failed, trying direct without project prefix ==="
+          export DATABASE_URL="postgresql://postgres:PromptMkt2026Secure@db.${PROJECT_REF}.supabase.co:5432/postgres"
+          export DIRECT_URL="$DATABASE_URL"
+          npx prisma db push --accept-data-loss 2>&1 && { echo "Schema pushed via direct!"; exit 0; }
+          echo "All connection methods failed"
           exit 1
 
       - name: Set Vercel environment variables
@@ -137,3 +149,4 @@ jobs:
           echo "## Infrastructure Setup" >> $GITHUB_STEP_SUMMARY
           echo "- Project ref: ${{ steps.supabase.outputs.PROJECT_REF }}" >> $GITHUB_STEP_SUMMARY
           echo "- Region: ap-northeast-1" >> $GITHUB_STEP_SUMMARY
+          echo "- DB host: db.${{ steps.supabase.outputs.PROJECT_REF }}.supabase.co" >> $GITHUB_STEP_SUMMARY
