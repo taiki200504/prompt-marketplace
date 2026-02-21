@@ -104,10 +104,10 @@ export default async function Home() {
               <span className="text-[var(--gold)] text-[11px] font-semibold uppercase tracking-wider">プレミアムAIプロンプト</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-5 sm:mb-6 leading-[1.1]">
-              <span className="text-[var(--text-primary)]">AIプロンプトの</span>
+            <h1 className="text-[1.75rem] sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 sm:mb-8 leading-[1.2]">
+              プロフェッショナルのための
               <br />
-              <span className="text-gradient">マーケットプレイス</span>
+              <span className="text-gradient">AIプロンプト</span>マーケット
             </h1>
 
             <p className="text-base sm:text-lg text-[var(--text-secondary)] mb-8 sm:mb-10 max-w-xl mx-auto leading-relaxed px-4 sm:px-0">
@@ -173,7 +173,7 @@ export default async function Home() {
           </div>
 
           {trending.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {trending.map((prompt) => (
                 <PromptCard key={prompt.id} {...prompt} />
               ))}

@@ -92,6 +92,9 @@ export default function SignupPage() {
                 required
                 minLength={3}
                 autoComplete="username"
+                maxLength={30}
+                pattern="^[a-zA-Z0-9_]+$"
+                title="英数字とアンダースコアのみ使用できます"
               />
               <p className="text-[11px] text-[var(--text-muted)] mt-1">3文字以上、英数字とアンダースコア</p>
             </div>

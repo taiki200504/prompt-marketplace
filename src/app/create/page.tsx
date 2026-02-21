@@ -93,11 +93,11 @@ export default function CreatePromptPage() {
   }
 
   return (
-    <div className="container py-12">
+    <div className="container py-12 sm:py-16">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-10">
           <div>
-            <h1 className="text-2xl font-semibold mb-1">新規プロンプト作成</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">新規プロンプト作成</h1>
             <p className="text-sm text-[var(--text-muted)]">
               プロンプトを作成して共有・販売しましょう
             </p>
@@ -108,11 +108,11 @@ export default function CreatePromptPage() {
         </div>
 
         <form onSubmit={(e) => handleSubmit(e, false)}>
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Basic Info */}
             <div className="card">
-              <h2 className="text-lg font-medium mb-4">基本情報</h2>
-              <div className="space-y-4">
+              <h2 className="text-lg font-semibold mb-6">基本情報</h2>
+              <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium mb-2">タイトル *</label>
                   <input
@@ -139,7 +139,7 @@ export default function CreatePromptPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium mb-2">カテゴリ *</label>
                     <select
@@ -201,8 +201,8 @@ export default function CreatePromptPage() {
 
             {/* Prompt Content */}
             <div className="card">
-              <h2 className="text-lg font-medium mb-4">プロンプト内容</h2>
-              <div className="space-y-4">
+              <h2 className="text-lg font-semibold mb-6">プロンプト内容</h2>
+              <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium mb-2">プロンプト本文 *</label>
                   <textarea
@@ -232,8 +232,8 @@ export default function CreatePromptPage() {
 
             {/* Examples */}
             <div className="card">
-              <h2 className="text-lg font-medium mb-4">入出力例</h2>
-              <div className="space-y-4">
+              <h2 className="text-lg font-semibold mb-6">入出力例</h2>
+              <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium mb-2">入力例 *</label>
                   <textarea

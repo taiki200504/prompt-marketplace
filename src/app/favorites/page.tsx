@@ -63,16 +63,16 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="container py-12">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold mb-2">お気に入り</h1>
+    <div className="container py-12 sm:py-16">
+      <div className="mb-10">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-3">お気に入り</h1>
         <p className="text-sm text-[var(--text-muted)]">
           お気に入りに追加したプロンプト
         </p>
       </div>
 
       {favorites.length > 0 ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {favorites.map((prompt) => (
             <PromptCard key={prompt.id} {...prompt} />
           ))}

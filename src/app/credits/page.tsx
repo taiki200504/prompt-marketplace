@@ -101,52 +101,51 @@ export default function CreditsPage() {
   }
 
   return (
-    <div className="container py-12">
+    <div className="container py-12 sm:py-16">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-semibold mb-8">クレジット</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-10">クレジット</h1>
 
         {/* Balance Card */}
-        <div className="card mb-8">
-          <div className="flex items-center justify-between">
+        <div className="card mb-10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
-              <p className="text-sm text-[var(--text-muted)] mb-1">現在の残高</p>
+              <p className="text-sm text-[var(--text-muted)] mb-2">現在の残高</p>
               <p className="text-4xl font-bold">
-                <span className="text-[var(--gold)]">◆</span>
+                <span className="text-[var(--gold)]">◆ </span>
                 {credits.toLocaleString()}
               </p>
             </div>
             <button
               onClick={claimBonus}
               disabled={claiming}
-              className="btn btn-primary"
+              className="btn btn-primary w-full sm:w-auto"
             >
-              {claiming ? '取得中...' : '🎁 ボーナスを受け取る'}
+              {claiming ? '取得中...' : 'デイリーボーナスを受け取る'}
             </button>
           </div>
         </div>
 
         {/* Info Card */}
-        <div className="card mb-8 bg-[var(--accent-muted)] border-[var(--accent-primary)]">
-          <h3 className="font-medium mb-2">💡 クレジットについて</h3>
-          <ul className="text-sm text-[var(--text-secondary)] space-y-1">
-            <li>• クレジットはプロンプトの購入に使用できます</li>
-            <li>• プロンプトが売れると、価格の80%がクレジットとして還元されます</li>
-            <li>• 新規登録で1,000クレジットプレゼント！</li>
-            <li>• デイリーボーナスで500クレジットを獲得できます</li>
+        <div className="card mb-10 bg-[var(--accent-muted)] border-[var(--accent-primary)]">
+          <h3 className="font-medium mb-4">クレジットについて</h3>
+          <ul className="text-sm text-[var(--text-secondary)] space-y-3">
+            <li>プロンプトの購入に使用できます</li>
+            <li>売上の80%がクレジットとして還元されます</li>
+            <li>毎日500クレジットのデイリーボーナスあり</li>
           </ul>
         </div>
 
         {/* History */}
         <div>
-          <h2 className="text-lg font-medium mb-4">履歴</h2>
+          <h2 className="text-lg font-semibold mb-6">取引履歴</h2>
           {history.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {history.map((item) => (
                 <div
                   key={item.id}
-                  className="card flex items-center justify-between py-3"
+                  className="card flex items-center justify-between py-4"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <span className={`badge badge-neutral ${getTypeStyle(item.type)}`}>
                       {getTypeLabel(item.type)}
                     </span>
@@ -154,11 +153,11 @@ export default function CreditsPage() {
                       {item.description}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 ml-4">
                     <span className={`font-medium ${item.amount >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
                       {item.amount >= 0 ? '+' : ''}{item.amount.toLocaleString()}
                     </span>
-                    <span className="text-xs text-[var(--text-muted)]">
+                    <span className="text-sm text-[var(--text-muted)] whitespace-nowrap">
                       {new Date(item.createdAt).toLocaleDateString('ja-JP')}
                     </span>
                   </div>
@@ -166,7 +165,7 @@ export default function CreditsPage() {
               ))}
             </div>
           ) : (
-            <div className="card text-center py-8">
+            <div className="card text-center py-10">
               <p className="text-[var(--text-muted)]">履歴はありません</p>
             </div>
           )}

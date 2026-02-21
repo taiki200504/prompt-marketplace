@@ -89,16 +89,16 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen py-12">
+    <div className="min-h-screen py-12 sm:py-16">
       <div className="container">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
-              クリエイターダッシュボード
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-2">
+              ダッシュボード
             </h1>
-            <p className="text-[var(--text-muted)]">
-              あなたのプロンプトのパフォーマンスを確認
+            <p className="text-sm text-[var(--text-muted)]">
+              プロンプトのパフォーマンスを確認
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -112,94 +112,64 @@ export default function DashboardPage() {
                     : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                {p === '7d' ? '7日間' : p === '30d' ? '30日間' : p === '90d' ? '90日間' : '全期間'}
+                {p === '7d' ? '7日' : p === '30d' ? '30日' : p === '90d' ? '90日' : '全期間'}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/* Stats Overview - 4 key metrics only */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
           <div className="card p-6">
-            <p className="text-sm text-[var(--text-muted)] mb-1">総閲覧数</p>
-            <p className="text-2xl font-bold text-[var(--text-primary)]">
+            <p className="text-sm text-[var(--text-muted)] mb-2">総閲覧数</p>
+            <p className="text-3xl font-bold text-[var(--text-primary)]">
               {data.stats.totalViews.toLocaleString()}
             </p>
           </div>
           <div className="card p-6">
-            <p className="text-sm text-[var(--text-muted)] mb-1">総購入数</p>
-            <p className="text-2xl font-bold text-[var(--text-primary)]">
+            <p className="text-sm text-[var(--text-muted)] mb-2">購入数</p>
+            <p className="text-3xl font-bold text-[var(--text-primary)]">
               {data.stats.totalPurchases.toLocaleString()}
             </p>
           </div>
           <div className="card p-6">
-            <p className="text-sm text-[var(--text-muted)] mb-1">総収益</p>
-            <p className="text-2xl font-bold text-[var(--gold)]">
+            <p className="text-sm text-[var(--text-muted)] mb-2">総収益</p>
+            <p className="text-3xl font-bold text-[var(--gold)]">
               ¥{data.stats.totalRevenue.toLocaleString()}
             </p>
           </div>
           <div className="card p-6">
-            <p className="text-sm text-[var(--text-muted)] mb-1">平均評価</p>
-            <p className="text-2xl font-bold text-[var(--warning)]">
-              ★ {data.stats.avgRating.toFixed(1)}
+            <p className="text-sm text-[var(--text-muted)] mb-2">平均評価</p>
+            <p className="text-3xl font-bold text-[var(--warning)]">
+              {data.stats.avgRating.toFixed(1)}
             </p>
           </div>
         </div>
 
-        {/* Secondary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          <div className="card p-4 text-center">
-            <p className="text-xl font-semibold text-[var(--text-primary)]">
-              {data.stats.totalPrompts}
-            </p>
-            <p className="text-xs text-[var(--text-muted)]">総プロンプト数</p>
-          </div>
-          <div className="card p-4 text-center">
-            <p className="text-xl font-semibold text-[var(--success)]">
-              {data.stats.publishedPrompts}
-            </p>
-            <p className="text-xs text-[var(--text-muted)]">公開中</p>
-          </div>
-          <div className="card p-4 text-center">
-            <p className="text-xl font-semibold text-[var(--accent-primary)]">
-              {data.stats.totalReviews}
-            </p>
-            <p className="text-xs text-[var(--text-muted)]">レビュー数</p>
-          </div>
-          <div className="card p-4 text-center">
-            <p className="text-xl font-semibold text-[var(--accent-secondary)]">
-              {data.stats.totalResultLogs}
-            </p>
-            <p className="text-xs text-[var(--text-muted)]">成果記録</p>
-          </div>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8 mb-12">
           {/* Top Performing Prompts */}
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
+          <div className="card p-6 sm:p-8">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-6">
               トップパフォーマンス
             </h2>
             {data.topPrompts.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {data.topPrompts.map((prompt, index) => (
                   <Link
                     key={prompt.id}
                     href={`/prompts/${prompt.id}`}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+                    className="flex items-center gap-4 p-4 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors"
                   >
                     <span className="text-lg font-bold text-[var(--gold)] w-6">
                       #{index + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[var(--text-primary)] truncate">
+                      <p className="font-medium text-[var(--text-primary)] truncate mb-1">
                         {prompt.title}
                       </p>
-                      <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
-                        <span>{prompt.views} 閲覧</span>
-                        <span>{prompt.purchases} 購入</span>
-                        <span>★ {prompt.avgRating.toFixed(1)}</span>
-                      </div>
+                      <p className="text-sm text-[var(--text-muted)]">
+                        {prompt.purchases}件購入 ・ ★ {prompt.avgRating.toFixed(1)}
+                      </p>
                     </div>
                     <p className="text-[var(--gold)] font-semibold whitespace-nowrap">
                       ¥{prompt.revenue.toLocaleString()}
@@ -208,7 +178,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8">
+              <div className="text-center py-10">
                 <p className="text-[var(--text-muted)] mb-4">
                   まだプロンプトがありません
                 </p>
@@ -220,33 +190,33 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Sales */}
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
+          <div className="card p-6 sm:p-8">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-6">
               最近の売上
             </h2>
             {data.recentSales.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {data.recentSales.map((sale) => (
                   <div
                     key={sale.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-tertiary)]"
+                    className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg-tertiary)]"
                   >
                     <div>
-                      <p className="font-medium text-[var(--text-primary)]">
+                      <p className="font-medium text-[var(--text-primary)] mb-1">
                         {sale.promptTitle}
                       </p>
-                      <p className="text-xs text-[var(--text-muted)]">
-                        @{sale.buyerUsername} • {new Date(sale.createdAt).toLocaleDateString('ja-JP')}
+                      <p className="text-sm text-[var(--text-muted)]">
+                        @{sale.buyerUsername} ・ {new Date(sale.createdAt).toLocaleDateString('ja-JP')}
                       </p>
                     </div>
-                    <p className="text-[var(--success)] font-semibold">
+                    <p className="text-[var(--success)] font-semibold whitespace-nowrap ml-4">
                       +¥{sale.price.toLocaleString()}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8">
+              <div className="text-center py-10">
                 <p className="text-[var(--text-muted)]">
                   まだ売上がありません
                 </p>
@@ -255,22 +225,22 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Monthly Chart Placeholder */}
+        {/* Monthly Stats - simplified */}
         {data.monthlyStats.length > 0 && (
-          <div className="card p-6 mt-8">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
+          <div className="card p-6 sm:p-8 mb-12">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-6">
               月別推移
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {data.monthlyStats.map((stat) => (
-                <div key={stat.month} className="text-center p-3 bg-[var(--bg-tertiary)] rounded-lg">
-                  <p className="text-xs text-[var(--text-muted)] mb-2">{stat.month}</p>
-                  <p className="text-lg font-bold text-[var(--gold)]">
+                <div key={stat.month} className="text-center p-5 bg-[var(--bg-tertiary)] rounded-xl">
+                  <p className="text-sm text-[var(--text-muted)] mb-3">{stat.month}</p>
+                  <p className="text-xl font-bold text-[var(--gold)] mb-1">
                     ¥{stat.revenue.toLocaleString()}
                   </p>
-                  <div className="text-xs text-[var(--text-muted)] mt-1">
-                    <span>{stat.views}閲覧</span> • <span>{stat.purchases}購入</span>
-                  </div>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {stat.purchases}件
+                  </p>
                 </div>
               ))}
             </div>
@@ -278,15 +248,12 @@ export default function DashboardPage() {
         )}
 
         {/* Quick Actions */}
-        <div className="flex flex-wrap justify-center gap-4 mt-12">
+        <div className="flex flex-wrap justify-center gap-4">
           <Link href="/create" className="btn btn-primary">
             新しいプロンプトを作成
           </Link>
           <Link href={`/profile/${session?.user?.username}`} className="btn btn-secondary">
             プロフィールを見る
-          </Link>
-          <Link href="/referral" className="btn btn-outline">
-            友達を招待
           </Link>
         </div>
       </div>
